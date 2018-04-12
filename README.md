@@ -46,8 +46,9 @@ LEAP
 - Setup
   connects to the LEAP
 
-USB Slave
----------
+USB Keyboard Slave
+------------------
+The pretends to be a USB keyboard for simple interfacing with a host computer.
 
 Gesture Interface
 -----------------
