@@ -56,3 +56,11 @@ The Gesture Interface is stateful and controls the user's actual experience
 - Handel Frame
   Takes a vector of ``(position, direction, gesture)`` for each hand visible
 The outputs of this module are almost exclusively through the attached screen.
+
+TODO
+====
+- Add LEAP motion libs to make file
+  ``https://forums.leapmotion.com/t/leap-motion-sdk-with-python-3-5-in-linux-tutorial/5249``
+- Add tensorflow or tensorflow-gpu to pip requierments
+  ``https://www.tensorflow.org/install/install_linux``
+
