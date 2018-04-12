@@ -41,8 +41,8 @@ SpeechSynth
   Takes a phrase or set of letters
   outputs an utterance to the speakers
 
-LEAP
-----
+LEAP Controler
+--------------
 - Setup
   connects to the LEAP
 
