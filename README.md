@@ -1,7 +1,7 @@
-CP Comunication System
-======================
+CP Communication System
+=======================
 
-To anybody who is familare with python, I apologise. This repositoyry will be structured much more like C and C++.
+To anybody who is familiar with python, I apologise. This repository will be structured much more like C and C++.
 
 Testing
 =======
@@ -12,33 +12,33 @@ Each module has either unit tests or integration tests depending on if it includ
 Modules
 =======
 
-Gesgure
+Gesture
 -------
 - Setup
-  Takes a DB to store gesgures in
-- Make/Refine Gesgure
-  Takes a ``hand`` and a gesgure name
+  Takes a DB to store gestures in
+- Make/Refine Gesture
+  Takes a ``hand`` and a gesture name
   no return
   incorperates that gesgure into the database
 - ReadGesgure
   Takes a ``hand``.
-  returns a tuple of ``(position, direction, gesgure)``, where ``gesgure`` is a vector of cirtenty for each known gesgure
+  returns a tuple of ``(position, direction, gesture)``, where ``gesture`` is a vector of certainty for each known gesture
 
-AutoCompleate
--------------
+AutoComplete
+------------
 - Setup
   Takes a dictionary of words with usage frequency
 - predict
-  Takes a vector of letter distubutions
+  Takes a vector of letter distributions
   returns a vector of word probabilities
   
-SpeachSynth
+SpeechSynth
 -----------
 - Setup
-  Takes a DB of phoneams
+  Takes a DB of phonemes
   Checks for a program for reading text.
 - Say
-  Takes a phrase or set of leters
+  Takes a phrase or set of letters
   outputs an utterance to the speakers
 
 LEAP
@@ -49,9 +49,9 @@ LEAP
 USB Slave
 ---------
 
-Gesgure Interface
+Gesture Interface
 -----------------
-The Gesgure Interface is statefull and controls the user's actual experince
+The Gesture Interface is stateful and controls the user's actual experience
 - Handel Frame
-  Takes a vector of ``(position, direction, gesgure)`` for each hand visable
-The outputs of this module are almost exclusivly though the attached screen.
+  Takes a vector of ``(position, direction, gesture)`` for each hand visible
+The outputs of this module are almost exclusively through the attached screen.
