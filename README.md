@@ -1,7 +1,7 @@
 CP Communication System
 =======================
 
-To anybody who is familiar with python, I apologise. This repository will be structured much more like C and C++.
+To anybody who is familiar with python, I apologize. This repository will be structured much more like C and C++.
 
 Testing
 =======
@@ -19,7 +19,7 @@ Gesture
 - Make/Refine Gesture
   Takes a ``hand`` and a gesture name
   no return
-  incorperates that gesgure into the database
+  incorporates that gesture into the database
 - ReadGesgure
   Takes a ``hand``.
   returns a tuple of ``(position, direction, gesture)``, where ``gesture`` is a vector of certainty for each known gesture
@@ -41,7 +41,7 @@ SpeechSynth
   Takes a phrase or set of letters
   outputs an utterance to the speakers
 
-LEAP Controler
+LEAP Controller
 --------------
 - Setup
   connects to the LEAP
@@ -61,6 +61,6 @@ TODO
 ====
 - Add LEAP motion libs to make file
   ``https://forums.leapmotion.com/t/leap-motion-sdk-with-python-3-5-in-linux-tutorial/5249``
-- Add tensorflow or tensorflow-gpu to pip requierments
+- Add tensorflow or tensorflow-gpu to pip requirements
   ``https://www.tensorflow.org/install/install_linux``
 
