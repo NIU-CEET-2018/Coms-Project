@@ -1,14 +1,12 @@
-TESTS := $(patsubst %.py,%.test,$(wildcard *.py))
-
 .PHONY: run test
 all: run
 
 run:
 
-test: $(TESTS)
+test:
+	python3 -m unittest *_test.py
 
 reqs:
 	pip3 install -r requirements.txt
 
-%.test: %.py
-	./$< test
+
