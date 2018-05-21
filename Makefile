@@ -7,6 +7,7 @@ test:
 	python3 -m unittest *_test.py
 
 reqs:
-	pip3 install -r requirements.txt
+	dpkg -V $$(xargs < packages.txt) 2>&1 | awk '{ print $$3 }'|sed "s/'//g"|xargs -r sudo apt-get install -y -q
+	pip3 -q install -r requirements.txt
 
 
