@@ -1,8 +1,5 @@
 #!/usr/bin/python3
-
-# @package Speach_Synth
-#
-#
+"""Converts text to speach."""
 
 import pyttsx3
 engine = pyttsx3.init()
