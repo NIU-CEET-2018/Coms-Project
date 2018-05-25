@@ -1,2 +1,3 @@
 pyttsx3
 google_speech
+tensorflow
