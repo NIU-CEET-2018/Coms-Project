@@ -5,6 +5,9 @@ from google_speech import Speech
 import pyttsx3
 engine = pyttsx3.init()
 
+# TODO: Make the voice more suted to the client.
+#       pyttsx3: https://pyttsx3.readthedocs.io/en/latest/engine.html
+#       google_speech: http://sox.sourceforge.net/sox.html#EFFECTS
 
 def sayText(t):
     def sayWithGoogle():
