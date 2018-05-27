@@ -9,6 +9,7 @@ engine = pyttsx3.init()
 #       pyttsx3: https://pyttsx3.readthedocs.io/en/latest/engine.html
 #       google_speech: http://sox.sourceforge.net/sox.html#EFFECTS
 
+
 def sayText(t):
     def sayWithGoogle():
         Speech(t, "en").play(("Speed", "1.2"))

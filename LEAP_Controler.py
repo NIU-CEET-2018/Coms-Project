@@ -8,12 +8,12 @@ and here
 https://developer.leapmotion.com/documentation/python/devguide/Sample_Tutorial.html
 """
 
-import os, sys, inspect, thread, time
+import os, sys, inspect, time
 src_dir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 # Windows and Linux
 arch_dir = '../lib/x64' if sys.maxsize > 2**32 else '../lib/x86'
 # Mac
-#arch_dir = os.path.abspath(os.path.join(src_dir, '../lib'))
+# arch_dir = os.path.abspath(os.path.join(src_dir, '../lib'))
 
 sys.path.insert(0, os.path.abspath(os.path.join(src_dir, arch_dir)))
 
@@ -55,13 +55,15 @@ def get_hand_position(blocking=False):
             for j in range(3):
                 # if only left or right hand some features will be missing
                 # TODO: set them to 0
-                calibrated_finger_bones["feat" + str(hand.is_right()*(5*4*3+3)+i*3+j+3)] = normalized_joint[j]
+                calibrated_finger_bones["feat" + str(hand.is_right()*(5*4*3+3) +
+                                                     i*3+j+3)] = normalized_joint[j]
         for j in range(3):
-            calibrated_finger_bones["feat"+str(hand.is_right()*(5*4*3+3)+j)]=hand_center[j]
+            calibrated_finger_bones["feat"+str(hand.is_right()*(5*4*3+3)+j)] = hand_center[j]
 
     # TODO: here goes the physics filter
 
     return calibrated_finger_bones
+
 
 if __name__ == "__main__":
     while True:

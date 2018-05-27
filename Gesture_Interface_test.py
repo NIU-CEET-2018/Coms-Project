@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import unittest
+import Gesture_Interface
 
 
 class GesgureInterfaceTests(unittest.TestCase):
