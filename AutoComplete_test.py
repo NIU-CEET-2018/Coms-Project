@@ -8,7 +8,7 @@ class AutoCompleteTests(unittest.TestCase):
                 pass
 
         def test_example(self):
-                if False:
+                if len(AutoComplete.predict("")) == 0:
                         self.fail("shouldn't happen")
 
         def tearDown(self):
