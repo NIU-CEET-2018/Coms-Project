@@ -18,11 +18,20 @@ All modules have an associated unittest script in ``./name_test.py``, ``make tes
 Hardware
 ========
 
-- UDOO Ultra
-- LEAP Motion Camera
-- 3D Printed Case
-- FaceDancer
-- 7" WaveShare LCD Screen
+Bought
+------
+
+- [X] UDOO Ultra
+- [X] LEAP Motion Camera
+- [X] FaceDancer
+- [X] 7" WaveShare LCD Screen
+- [ ] Battery
+
+Made
+----
+- [ ] 3D Printed Case
+- [ ] Front Panel
+  Power Button and Shutdown on Low Battery Circuit
 
 Software Modules
 ================
