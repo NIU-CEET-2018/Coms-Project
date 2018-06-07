@@ -2,6 +2,7 @@
 all: run
 
 run:
+	python3 main.py
 
 test:
 	python3 -m coverage erase
