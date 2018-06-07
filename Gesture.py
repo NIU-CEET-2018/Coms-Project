@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-"""Interpreats bone structures into Gestures and Gesture Sequences.
+"""Interprets bone structures into Gestures and Gesture Sequences.
 """
 
 # Bone to Gestlet

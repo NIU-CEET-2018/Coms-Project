@@ -21,6 +21,8 @@ Hardware
 - UDOO Ultra
 - LEAP Motion Camera
 - 3D Printed Case
+- FaceDancer
+- 7" WaveShare LCD Screen
 
 Software Modules
 ================
@@ -46,15 +48,15 @@ Gesture
   Each of the sub modules have an AI and a GofAI version
   - Bone to Gestlet
     Converts bone structure information into probable Gestlets.
-	(A gestlet is a particular hand position in a gesticulation.)
+    (A gestlet is a particular hand position in a gesticulation.)
   - Gestlet Seq to P(Gesture)
-	Converts a small sequence of Gestlets into a probable Gesture.
-	OR
-	Converts an updating sequence of Gestlets into an updating sequence of Gesture Probabilities.
+    Converts a small sequence of Gestlets into a probable Gesture.
+    OR
+    Converts an updating sequence of Gestlets into an updating sequence of Gesture Probabilities.
   - P(Gesture) Seq to Gesture Seq
     Converts a Sequence of Gesture Probabilities into a most likely (Markovian?) sequence of Gestures.
-	OR
-	Converts an updating sequence of Gesture Probabilities into an updating sequence of most likely Gestures.
+    OR
+    Converts an updating sequence of Gesture Probabilities into an updating sequence of most likely Gestures.
   - Current Gesture Seq to Next Gesture Prediction
     Takes in a Gesture Sequence and outputs the probable (next word) or (completion of current word).
 - AI Multi-Path
