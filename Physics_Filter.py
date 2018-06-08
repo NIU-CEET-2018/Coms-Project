@@ -1,3 +1,5 @@
 #!/usr/bin/python3
 
-"""Filters out suspicious and cleans up noisy data from a stream."""
+"""Filters out and cleans up suspicious/noisy data from a stream."""
+
+import time

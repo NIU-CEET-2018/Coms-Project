@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+import Gesture_Interface
+import SpeechSynth
+import USB_Keyboard_Slave
+
 def main():
     pass
 
