@@ -1,11 +1,17 @@
 #!/usr/bin/python3
+
+"""The test file for Gesture_Interface."""
 import unittest
 import Gesture_Interface
 
 
-class GesgureInterfaceTests(unittest.TestCase):
-        def setUp(self):
-                pass
+class GesgureInterfaceUnitTests(unittest.TestCase):
+    """The unit test suite for Gesture_Interface"""
 
-        def tearDown(self):
-                pass
+    def setUp(self):
+        """Nothing to setup here."""
+        pass
+
+    def tearDown(self):
+        """Nothing to tearDown."""
+        pass

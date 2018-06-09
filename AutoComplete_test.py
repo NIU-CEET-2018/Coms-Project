@@ -1,15 +1,21 @@
 #!/usr/bin/python3
+
+"""The test file for AutoComplete"""
 import unittest
 import AutoComplete
 
 
-class AutoCompleteTests(unittest.TestCase):
-        def setUp(self):
-                pass
+class AutoCompleteUnitTests(unittest.TestCase):
+    """The unit test suite for auto-completion."""
+    def setUp(self):
+        """Nothing to setup here."""
+        pass
 
-        def test_example(self):
-                if len(AutoComplete.predict("")) == 0:
-                        self.fail("shouldn't happen")
+    def test_autoCompleateLoads(self):
+        """Check that autocomplete even loads"""
+        if not AutoComplete.predict(""):
+            self.fail("shouldn't happen")
 
-        def tearDown(self):
-                pass
+    def tearDown(self):
+        """Nothing to tearDown either."""
+        pass

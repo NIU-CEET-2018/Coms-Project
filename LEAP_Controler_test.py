@@ -1,14 +1,20 @@
 #!/usr/bin/python3
+
+"""The test file for LEAP_Controler."""
 import unittest
 import LEAP_Controler
 
 
-class LeapControllerTests(unittest.TestCase):
-        def setUp(self):
-                pass
+class LeapControllerUnitTests(unittest.TestCase):
+    """The unit test suite for LEAP_Controler."""
+    def setUp(self):
+        """Noting to setup here."""
+        pass
 
-        def basic_test(self):
-                LEAP_Controler.get_hand_position(True)
+    def basic_test(self):
+        """"Check that the functions don't crash."""
+        LEAP_Controler.handle_frame()
+        LEAP_Controler.Get_Hand()
 
-        def tearDown(self):
-                pass
+    def tearDown(self):
+        pass

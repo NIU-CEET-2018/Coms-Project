@@ -1,14 +1,20 @@
 #!/usr/bin/python3
+
+"""The test file for SpeechSynth."""
 import unittest
 import SpeechSynth
 
 
-class SpeechSynthTests(unittest.TestCase):
-        def setUp(self):
-                pass
+class SpeechSynthUnitTests(unittest.TestCase):
+    """The unit test suite for SpeechSynth."""
+    def setUp(self):
+        """Noting to setup here."""
+        pass
 
-        def test_can_say_words(self):
-                SpeechSynth.sayText("This is a test.")
+    def test_can_say_words(self):
+        """A simple test that things work."""
+        SpeechSynth.sayText("This is a test.")
 
-        def tearDown(self):
-                pass
+    def tearDown(self):
+        """Noting to tearDown."""
+        pass
