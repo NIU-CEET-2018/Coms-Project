@@ -2,6 +2,7 @@
 
 """TODO: Docs"""
 
+
 class ThinkingSequence():
     """A class that represents an updating vector.
 

@@ -68,4 +68,4 @@ word."""
 """Construct a new internal gesture from a given hand gesture."""
 
 # Train Gesture
-"""Improve the accuracy of a given gesture's recognition via manual repetition."""
+"""Improve the accuracy of a given gesture via repetition."""

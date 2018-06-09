@@ -43,6 +43,7 @@ def handle_frame():
 
     return handVectors
 
+
 newHands = []
 
 # TODO: Make a thread that
@@ -50,6 +51,7 @@ newHands = []
 #       - checks the physics (and removes extra hands)
 #       - checks it's non-empty
 #       - adds it to a list of un-consumed hand(-pair)s
+
 
 def Get_Hand():
     """Return the next unconsumed hand position. Blocking."""
