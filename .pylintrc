@@ -3,5 +3,6 @@ module-rgx=[a-zA-Z_]*$
 method-rgx=[a-zA-Z_]*$
 variable-rgx=[a-zA-Z_]*$
 function-rgx=[a-zA-Z_]*$
+class-rgx=[a-zA-Z_]*$
 [MESSAGES CONTROL]
 disable=fixme
