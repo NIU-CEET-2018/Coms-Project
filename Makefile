@@ -24,7 +24,7 @@ test-core:
 reqs:
 	dpkg -V $$(xargs < packages.txt) || sudo apt-get install -y -q $$(xargs < packages.txt)
 	pip3 -q install -r requirements.txt
-	dpkg -V Leap || sudo dpkg --install LEAP/Leap-2.3.1+31549-x64.deb
+	dpkg -V Leap || sudo ./Install_Leap_Deamon.sh
 
 .phony: todos
 todos:
