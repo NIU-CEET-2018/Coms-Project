@@ -23,7 +23,8 @@ test-core:
 .phony: reqs
 reqs:
 	dpkg -V $$(xargs < packages.txt) || sudo apt-get install -y -q $$(xargs < packages.txt)
-	pip3 -q install -r requirements.txt
+	pip3 -q install -r requirements3.txt
+	pip2 -q install -r requirements2.txt
 	dpkg -V Leap || sudo ./Install_Leap_Deamon.sh
 
 .phony: todos
