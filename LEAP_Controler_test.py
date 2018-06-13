@@ -13,7 +13,6 @@ class LeapControllerUnitTests(unittest.TestCase):
 
     def basic_test(self):
         """"Check that the functions don't crash."""
-        LEAP_Controler.handle_frame()
         LEAP_Controler.Get_Hand()
 
     def tearDown(self):

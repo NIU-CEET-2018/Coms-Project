@@ -14,6 +14,7 @@ test-full:
 	python3 -m flake8 *.py
 	python3 -m coverage erase
 	python3 -m coverage run -m unittest *_test.py
+	python2 -m coverage run -m unittest *_test2.py
 	python3 -m coverage report -m --fail-under=80
 
 .phony: test-core
