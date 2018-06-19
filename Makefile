@@ -1,23 +1,32 @@
 .PHONY: all
-all: test-core run
+all: test-code run
 
 .PHONY: run
 run:
 	python3 main.py
 
 .phony: test
-test: test-full
+test: test-format test-code-and-coverage todos
 
-.phony: test-full
-test-full:
+.phony: test-format
+test-format:
 	python3 -m pylint *.py
+	echo
 	python3 -m flake8 *.py
+	echo
+
+.phony: test-code-and-coverage
+test-code-and-coverage:
 	python3 -m coverage erase
 	python3 -m coverage run -m unittest *_test.py
-	python2 -m coverage run -m unittest *_test2.py
 	python3 -m coverage report -m --fail-under=80
+	echo
+	python2 -m coverage erase
+	python2 -m coverage run -m unittest *_test2.py
+	python2 -m coverage report -m --fail-under=80
+	echo
 
-.phony: test-core
+.phony: test-code
 test-core:
 	python3 -m unittest *_test.py
 
@@ -30,4 +39,4 @@ reqs:
 
 .phony: todos
 todos:
-	grep -n "TODO" *.py|cat -n
+	grep -n "TODO" *.py | cat -n
