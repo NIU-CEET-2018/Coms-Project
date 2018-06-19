@@ -28,5 +28,7 @@ will roll over to eSpeak if it can't reach the server."""
 
     try:
         sayWithGoogle()
-    except:
+    except Exception as e:
+        # TODO: make this a ConnectionError
+        print(e)
         sayWithESpeak()

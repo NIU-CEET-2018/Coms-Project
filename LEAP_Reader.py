@@ -3,7 +3,7 @@
 import sys
 import LEAP.Leap as Leap
 from LEAP.Leap import Bone
-#, thread, time
+# , thread, time
 
 
 class Listener(Leap.Listener):
@@ -38,7 +38,6 @@ class Listener(Leap.Listener):
                         p.append((finger.bone(b).next_joint
                                   - hand.palm_position)[j])
             print(p)
-
 
     def state_string(self, state):
         if state == Leap.Gesture.STATE_START:

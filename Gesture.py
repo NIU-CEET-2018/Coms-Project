@@ -19,6 +19,7 @@ collected and the system trained.
     def __init__(self):
         ThinkingSequence.__init__(self)
 
+
 class Bone_to_Gestlet_GofAI(ThinkingSequence):
     """Converts bone structure information into probable Gestlets.
 (A gestlet is a particular hand position in a gesticulation.)
@@ -57,7 +58,7 @@ class GestletPS_to_GesturePS_AI(ThinkingSequence):
     def __init__(self):
         ThinkingSequence.__init__(self)
 
-    
+
 class GesturePS_to_GestureMS_GofAI(ThinkingSequence):
     """Converts a sequence of Gesture Probabilities into likely Gestures.
 
