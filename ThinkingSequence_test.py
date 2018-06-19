@@ -22,7 +22,7 @@ class ThinkingSequenceUnitTests(unittest.TestCase):
         if t.hasUpdated() is not True:
             self.fail("No update Detected.")
 
-    def test_basic(self):
+    def test_basic_hook(self):
         """Test a basic hook."""
         def double(x):
             x.outData = []
@@ -33,6 +33,21 @@ class ThinkingSequenceUnitTests(unittest.TestCase):
         t.recive([1, 2, 3, 4])
         if t.getData() != [2, 4, 6, 8]:
             self.fail("Wrong data found:"+str(t.getData()))
+
+    def test_chain(self):
+        """Test that it is chain-able."""
+        t1 = ThinkingSequence()
+        t2 = ThinkingSequence()
+
+        def passData(x):
+            x.hasUpdated()
+            t2.recive(x.getData())
+
+        t1.afterUpdateHook = passData
+
+        t1.recive(["Test", "Text"])
+        if t2.getData() != ["Test", "Text"]:
+            self.fail("Wrong data found:"+str(t2.getData()))
 
     def tearDown(self):
         """Nothing to tearDown."""

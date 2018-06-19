@@ -4,16 +4,14 @@
 
 
 class ThinkingSequence():
-    """A class that represents an updating vector.
+    """This class that represents an updating data structure.
 
-The class described here in is similar to a const vector reference in
-that the items within is could be manipulated still by the providing
-thread, but the receiving thread is unable to change the values if
-finds (only read them). This class will also have the ability to
-inform others when changes have occurred and possibility the ability
-to hook functions into it from the client side so that they can be
-automatically called upon an update occurring (possibly
-non-threaded)."""
+The class described here in is a is of a data-object that is meant to
+sometimes update in value when another data-source updates (and then
+cause ripple down effects from that update). This class is
+intentionally designed to be chain-able with its self so that complex
+sequences can be described in simple steps, similar to the Unix
+pipe."""
 
     def __init__(self):
         """Initialize the hooks and values."""
