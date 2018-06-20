@@ -17,10 +17,10 @@ class ThinkingSequenceUnitTests(unittest.TestCase):
         if t.hasUpdated() is not False:
             self.fail("An update was detected before one was made.")
         t.recive(["the", "cat", "in", "the", "hat"])
-        if t.getData() != ["the", "cat", "in", "the", "hat"]:
-            self.fail("The structure contained the wrong data.")
         if t.hasUpdated() is not True:
             self.fail("No update Detected.")
+        if t.getData() != ["the", "cat", "in", "the", "hat"]:
+            self.fail("The structure contained the wrong data.")
 
     def test_basic_hook(self):
         """Test a basic hook."""
@@ -48,6 +48,30 @@ class ThinkingSequenceUnitTests(unittest.TestCase):
         t1.recive(["Test", "Text"])
         if t2.getData() != ["Test", "Text"]:
             self.fail("Wrong data found:"+str(t2.getData()))
+
+    def tearDown(self):
+        """Nothing to tearDown."""
+        pass
+
+class LearningSequenceUnitTests(unittest.TestCase):
+    """The unit test suite for LearningSequence."""
+    def setUp(self):
+        """Load a default module and don't let it learn."""
+        self.model = LearningSequence("./testModel")
+        self.model.LEARNING = False
+
+    def tearDown(self):
+        """Nothing to tearDown."""
+        pass
+
+class AIShepardUnitTests(unittest.TestCase):
+    """The unit test suite for AIShepard."""
+    def setUp(self):
+        """Nothing to setup here."""
+        model1 = LearningSequence("./testAIS1")
+        model2 = LearningSequence("./testAIS2")
+        self.model = AIShepard(model1, model2, "./testAISConfig")
+        self.model.LEARNING = False
 
     def tearDown(self):
         """Nothing to tearDown."""

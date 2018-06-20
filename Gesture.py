@@ -1,23 +1,7 @@
 #!/usr/bin/python3
 
 """Interprets bone structures into Gestures and Gesture Sequences."""
-from ThinkingSequence import ThinkingSequence
-
-
-class AI_Multi_Path(ThinkingSequence):
-    """An AI multiplexer.
-
-A trainable generator that is constructed on two generators, the first
-of which is the simplistic but functional generator and the second of
-which is the trainable but notes necessary good. The system will
-assume that he second starts off as not very good but as it trained
-will eventually swap out the old version for better/trained second
-version. This will occur over many runs of the program as data is
-collected and the system trained.
-
-"""
-    def __init__(self):
-        ThinkingSequence.__init__(self)
+from IntelligentTubes import ThinkingSequence, LearningSequence, AIShepard
 
 
 class Bone_to_Gestlet_GofAI(ThinkingSequence):
