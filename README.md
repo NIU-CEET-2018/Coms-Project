@@ -38,10 +38,7 @@ Software Modules
 
 LEAP Controller
 ---------------
-- Setup
-  connects to the LEAP
-- Inputs
-  A generator object that Streams out hand vectors.
+This module is divided into two pieces because the Leap Motion Libraries for python have not yet been updated to Python 3. The Python 2 portion resides in `LEAP_Reader.py` and simply passes the LEAP's events out as text. The Python 3 portion captures this text in an event loop.
 
 Physics Filter
 --------------

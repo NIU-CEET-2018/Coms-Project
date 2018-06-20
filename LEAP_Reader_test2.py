@@ -6,12 +6,12 @@ import LEAP_Reader
 
 
 class LeapReaderUnitTests(unittest.TestCase):
-    """The unit test suite for LEAP_Reader."""
+    """TODO: The unit test suite for LEAP_Reader."""
     def setUp(self):
         """Noting to setup here."""
         pass
 
-    def basic(self):
+    def test_basic(self):
         """If this is running, everything started correctly."""
         pass
 

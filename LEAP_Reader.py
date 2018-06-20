@@ -24,8 +24,8 @@ class Listener(Leap.Listener):
 
         for hand in frame.hands:
             p = []
-            p.append(frame.id)
-            p.append(frame.timestamp)
+            p.append(int(frame.id))
+            p.append(int(frame.timestamp))
             p.append(hand.is_left)
             for j in range(3):
                 p.append(hand.palm_position[j])

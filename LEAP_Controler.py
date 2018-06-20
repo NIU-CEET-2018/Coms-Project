@@ -3,24 +3,22 @@
 """Interface with the LEAP Motion to detect hand positions.
 """
 
-import collections
-import Physics_Filter
+import os
 
+def raw_event_source(handler):
+    """Spawn a python 2 interpreter for interfacing with the LEAP and pass
+the events it generates to the handler."""
+    sub = os.popen('python2', 'LEAP_Reader.py')
+    l = sub.readline()
+    while l:
+        handler(l)
+        l = sub.readline()
 
-newHands = []
-
-# TODO: Make a thread that
-#       - consumes a frame
-#       - checks the physics (and removes extra hands)
-#       - checks it's non-empty
-#       - adds it to a list of un-consumed hand(-pair)s
-
-
-def Get_Hand():
-    """Return the next unconsumed hand position. Blocking."""
-    while not newHands:
-        # wait
-        pass
-    # get the front hand
-    # remove it from the array
-    # return it
+def event_loop(t_seq_in):
+    """Call t_seq_in for each Leap event."""
+    def event_handler(event):
+        """Wrap the provided function with the needed parser for the Leap's data."""
+        # TODO: should probably sanitize that
+        data = eval(event)
+        t_seq_in(data)
+    raw_event_source(event_handler)
