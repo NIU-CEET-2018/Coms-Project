@@ -1,6 +1,15 @@
 #!/usr/bin/python3
 
-"""TODO: Docs"""
+"""Intelligent Tubes
+
+The classes described within this file describe a set of data pipes
+that can perform specific actions on their content. The originating
+purpose of this library is two fold: the first is for parallel AI
+training; and, the second is to be able to set up a chain of simple
+data processing calls that happen every-time there is an event.
+
+For further information please read the docs of ThinkingSequence and
+AIShepard. """
 
 
 class ThinkingSequence():

@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-"""The test file for ThinkingSequence."""
+"""The test file for Intelligent Tubes."""
 import unittest
-from ThinkingSequence import ThinkingSequence
+from IntelligentTubes import ThinkingSequence
 
 
 class ThinkingSequenceUnitTests(unittest.TestCase):
