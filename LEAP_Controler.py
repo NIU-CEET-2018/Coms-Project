@@ -8,9 +8,10 @@ import os
 def raw_event_source(handler):
     """Spawn a python 2 interpreter for interfacing with the LEAP and pass
 the events it generates to the handler."""
-    sub = os.popen('python2', 'LEAP_Reader.py')
+    sub = os.popen('python2 LEAP_Reader.py')
     l = sub.readline()
     while l:
+        # TODO: Check the length of sub's buffer and clear/warn if it gets too large.
         handler(l)
         l = sub.readline()
 
