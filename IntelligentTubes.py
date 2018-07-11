@@ -56,6 +56,9 @@ pipe."""
         self.changed = False
         return self.outData
 
+    def hook_as_next(self, t_seq):
+        """Hook another ThinkingSequence as the next data receiver."""
+        self.onUpdateHook = lambda ts: t_seq.recive(ts.getData)
 
 class LearningSequence(ThinkingSequence):
     """TODO: Docs"""
@@ -133,5 +136,7 @@ current primary AI system. This is enabled by default as the initial
 use of this system is for a slow learning AI system that will receive
 a (probably) small amount of negative (active) feedback."""
 
-    def __init__(self):
+    def __init__(self, models, config):
         LearningSequence.__init__(self)
+        # TODO: Load the config
+        # TODO: pair up the modules with their confidence

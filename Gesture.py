@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 """Interprets bone structures into Gestures and Gesture Sequences."""
-from IntelligentTubes import ThinkingSequence, LearningSequence, AIShepard
+from IntelligentTubes import LearningSequence
 
 
-class Bone_to_Gestlet_GofAI(ThinkingSequence):
+class Bone_to_Gestlet_GofAI(LearningSequence):
     """Converts bone structure information into probable Gestlets.
 (A gestlet is a particular hand position in a gesticulation.)
 
@@ -19,66 +19,69 @@ p\\rightarrow p\\div+/p
 #+END_SRC
 """
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class Bone_to_Gestlet_AI(ThinkingSequence):
+class Bone_to_Gestlet_AI(LearningSequence):
     """Converts bone structure information into probable Gestlets.
 (A gestlet is a particular hand position in a gesticulation.)
 
 A small RANN written in tensor-flow."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class GestletPS_to_GesturePS_GofAI(ThinkingSequence):
+class GestletPS_to_GesturePS_GofAI(LearningSequence):
     """Converts a Sequence of Gestlets into Gesture Probabilities."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class GestletPS_to_GesturePS_AI(ThinkingSequence):
+class GestletPS_to_GesturePS_AI(LearningSequence):
     """Converts a sequence of Gestlets into Gesture Probabilities."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class GesturePS_to_GestureMS_GofAI(ThinkingSequence):
+class GesturePS_to_GestureMS_GofAI(LearningSequence):
     """Converts a sequence of Gesture Probabilities into likely Gestures.
 
 Probably some markovian maths here."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class GesturePS_to_GestureMS_AI(ThinkingSequence):
+class GesturePS_to_GestureMS_AI(LearningSequence):
     """Converts a sequence of Gesture Probabilities into likely Gestures.
 
 Probably some markovian maths here."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class GestureS_to_Next_Gesture_GofAI(ThinkingSequence):
+class GestureS_to_Next_Gesture_GofAI(LearningSequence):
     """Converts a Gesture Sequence into the probable next word.
 
 Or, if the current word is partly typed, the completion of current
 word."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-class GestureS_to_Next_Gesture_AI(ThinkingSequence):
+class GestureS_to_Next_Gesture_AI(LearningSequence):
     """Converts a Gesture Sequence into the probable next word.
 
 Or, if the current word is partly typed, the completion of current
 word."""
     def __init__(self):
-        ThinkingSequence.__init__(self)
+        LearningSequence.__init__(self)
 
 
-# Make Gesture
-"""Construct a new internal gesture from a given hand gesture."""
+def MakeGesture():
+    """Construct a new internal gesture from a given hand gesture."""
+    pass
 
-# Train Gesture
-"""Improve the accuracy of a given gesture via repetition."""
+
+def TrainGesture():
+    """Improve the accuracy of a given gesture via repetition."""
+    pass

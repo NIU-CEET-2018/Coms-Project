@@ -2,7 +2,7 @@
 
 """The test file for Intelligent Tubes."""
 import unittest
-from IntelligentTubes import ThinkingSequence
+from IntelligentTubes import ThinkingSequence, LearningSequence, AIShepard
 
 
 class ThinkingSequenceUnitTests(unittest.TestCase):
@@ -13,41 +13,38 @@ class ThinkingSequenceUnitTests(unittest.TestCase):
 
     def test_existance(self):
         """Test that the class can hold data."""
-        t = ThinkingSequence()
-        if t.hasUpdated() is not False:
+        thinkSeq = ThinkingSequence()
+        if thinkSeq.hasUpdated() is not False:
             self.fail("An update was detected before one was made.")
-        t.recive(["the", "cat", "in", "the", "hat"])
-        if t.hasUpdated() is not True:
+        thinkSeq.recive(["the", "cat", "in", "the", "hat"])
+        if thinkSeq.hasUpdated() is not True:
             self.fail("No update Detected.")
-        if t.getData() != ["the", "cat", "in", "the", "hat"]:
+        if thinkSeq.getData() != ["the", "cat", "in", "the", "hat"]:
             self.fail("The structure contained the wrong data.")
 
     def test_basic_hook(self):
         """Test a basic hook."""
-        def double(x):
-            x.outData = []
-            for v in x.inData:
-                x.outData.append(v*2)
-        t = ThinkingSequence()
-        t.onUpdateHook = double
-        t.recive([1, 2, 3, 4])
-        if t.getData() != [2, 4, 6, 8]:
-            self.fail("Wrong data found:"+str(t.getData()))
+        def double(t_sequence):
+            """Double the inData for a ThinkingSequence."""
+            t_sequence.outData = []
+            for v in t_sequence.inData:
+                t_sequence.outData.append(v*2)
+        thinkSeq = ThinkingSequence()
+        thinkSeq.onUpdateHook = double
+        thinkSeq.recive([1, 2, 3, 4])
+        if thinkSeq.getData() != [2, 4, 6, 8]:
+            self.fail("Wrong data found:"+str(thinkSeq.getData()))
 
     def test_chain(self):
         """Test that it is chain-able."""
-        t1 = ThinkingSequence()
-        t2 = ThinkingSequence()
+        thinkSeq1 = ThinkingSequence()
+        thinkSeq2 = ThinkingSequence()
 
-        def passData(x):
-            x.hasUpdated()
-            t2.recive(x.getData())
+        thinkSeq1.hook_as_next(thinkSeq2)
 
-        t1.afterUpdateHook = passData
-
-        t1.recive(["Test", "Text"])
-        if t2.getData() != ["Test", "Text"]:
-            self.fail("Wrong data found:"+str(t2.getData()))
+        thinkSeq1.recive(["Test", "Text"])
+        if thinkSeq2.getData() != ["Test", "Text"]:
+            self.fail("Wrong data found:"+str(thinkSeq2.getData()))
 
     def tearDown(self):
         """Nothing to tearDown."""
@@ -70,7 +67,7 @@ class AIShepardUnitTests(unittest.TestCase):
         """Nothing to setup here."""
         model1 = LearningSequence("./testAIS1")
         model2 = LearningSequence("./testAIS2")
-        self.model = AIShepard(model1, model2, "./testAISConfig")
+        self.model = AIShepard([model1, model2], "./testAISConfig")
         self.model.LEARNING = False
 
     def tearDown(self):

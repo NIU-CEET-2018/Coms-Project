@@ -7,12 +7,12 @@ This devices is (initially) aimed towards an individual with Cerebral Palsy who 
 Setup
 -----
 
-Running ``make reqs`` will (on Debian) install the required packages through apt and pip3.
+Running ``make reqs`` will (on Debian) install the required packages (through apt, pip2, and pip3) and will install the Leap Daemon.
 
 Testing
 -------
 
-All modules have an associated unittest script in ``./name_test.py``, ``make test`` will run all of these tests.
+Modules have associated unittest scripts, ``make test`` will run these tests.
 
 
 Hardware
@@ -22,19 +22,28 @@ Bought
 ------
 
 - [X] UDOO Ultra
-- [X] LEAP Motion Camera
-- [X] FaceDancer
-- [X] 7" WaveShare LCD Screen
-- [ ] Battery
+- [X] IO
+  - [X] LEAP Motion Camera
+  - [X] FaceDancer
+  - [X] 7" WaveShare LCD Screen
+- [ ] Power
+  - [ ] Battery
+  - [ ] Battery Charger
 
 Made
 ----
 - [ ] 3D Printed Case
-- [ ] Front Panel
-  Power Button and Shutdown on Low Battery Circuit
+- [ ] Front Panel Circuit
+   - [ ] Power Button
+   - [ ] Shutdown on Low Battery
+   - [ ] LED Indicator
 
 Software Modules
 ================
+
+Intelligent Tubes
+-----------------
+Intelligent Tubes is a library that has been developed for this application. It creates a Unix pipe like object called a `Thinking Sequence`.
 
 LEAP Controller
 ---------------
@@ -42,8 +51,7 @@ This module is divided into two pieces because the Leap Motion Libraries for pyt
 
 Physics Filter
 --------------
-- Filter
-  A generator object that is constructed on a stream of timestamped continuous physics measurements and filters out the suspicious measurements.
+A `Thinking Sequence` object that takes timestamped physics measurements and filters out the suspicious data. The system also tries to separate the data into distinct sequences based on temporal separation.
 
 Gesture
 -------
@@ -75,27 +83,15 @@ Gesture
 
 Speech Synth
 ------------
-- Setup
-  Initializes the speech engine(s).
-- Say
-  Takes a phrase or set of letters and produces an utterance to the speakers/headphones.
+On importing the system initializes the speech engine(s).
+When called the module takes a phrase or set of letters and produces an utterance to the standard audio out.
 
 USB Keyboard Slave
 ------------------
 The pretends to be a USB keyboard for simple interfacing with a host computer.
-- Setup
-- Type
-  Outputs the set of chars as a keyboard would over usb.
 
 Gesture Interface
 -----------------
 The Gesture Interface is stateful and controls the user's actual experience.
 This module sets up and reads inputs from the LEAP->Phys->Gesture stack, and outputs to the screen along with calls to Speech Synth and USB Keyboard Slave.
-
-TODO
-====
-- Add LEAP motion libs to make file
-  ``https://forums.leapmotion.com/t/leap-motion-sdk-with-python-3-5-in-linux-tutorial/5249``
-- Add tensorflow or tensorflow-gpu to pip requirements
-  ``https://www.tensorflow.org/install/install_linux``
 

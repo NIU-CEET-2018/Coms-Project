@@ -8,7 +8,8 @@ import Gesture
 class GesgureUnitTests(unittest.TestCase):
     """The unit test suite for Gesture."""
     def setUp(self):
-        """Noting to setup here."""
+        """Disable Learning while using the test data."""
+        # Gesture.LEARNING = False
         pass
 
     def test_Bone_to_Gestlet_GofAI(self):
