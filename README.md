@@ -95,3 +95,7 @@ Gesture Interface
 The Gesture Interface is stateful and controls the user's actual experience.
 This module sets up and reads inputs from the LEAP->Phys->Gesture stack, and outputs to the screen along with calls to Speech Synth and USB Keyboard Slave.
 
+Storage Option
+-----------------
+Storage must be able to be turned on or off manually so that it can conform to requirements set by standardized testing companies (can't save test responses).
+
