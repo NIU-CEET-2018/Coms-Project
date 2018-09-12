@@ -33,32 +33,36 @@ class SampleListener(Leap.Listener):
         frame = controller.frame()
 
         #create letter identifier for data spreadsheet
-        a1 = [1]+[0]*25
-        b1 = [0]+[1]+[0]*24
-        c1 = [0]*2+[1]+[0]*22
-        d1 = [0]*3+[1]+[0]*21
-        e1 = [0]*4+[1]+[0]*20
-        f1 = [0]*5+[1]+[0]*19
-        g1 = [0]*6+[1]+[0]*18
-        h1 = [0]*7+[1]+[0]*17
-        i1 = [0]*8+[1]+[0]*16
-        j1 = [0]*9+[1]+[0]*15
-        k1 = [0]*10+[1]+[0]*14
-        l1 = [0]*11+[1]+[0]*13
-        m1 = [0]*12+[1]+[0]*12
-        n1 = [0]*13+[1]+[0]*11
-        o1 = [0]*14+[1]+[0]*10
-        p1 = [0]*15+[1]+[0]*9
-        q1 = [0]*16+[1]+[0]*8
-        r1 = [0]*17+[1]+[0]*7
-        s1 = [0]*18+[1]+[0]*6
-        t1 = [0]*19+[1]+[0]*5
-        u1 = [0]*20+[1]+[0]*4
-        v1 = [0]*21+[1]+[0]*3
-        w1 = [0]*22+[1]+[0]*2
-        x1 = [0]*23+[1]+[0]*1
-        y1 = [0]*24+[1]+[0]
-        z1 = [0]*25+[1]
+        def LetterToVector(letter):
+            v=[0]*26
+            v[ord(letter)-ord("a")]=1
+            return v
+        a1 = LetterToVector("a")
+        b1 = LetterToVector("b")
+        c1 = LetterToVector("c")
+        d1 = LetterToVector("d")
+        e1 = LetterToVector("e")
+        f1 = LetterToVector("f")
+        g1 = LetterToVector("g")
+        h1 = LetterToVector("h")
+        i1 = LetterToVector("i")
+        j1 = LetterToVector("j")
+        k1 = LetterToVector("k")
+        l1 = LetterToVector("l")
+        m1 = LetterToVector("m")
+        n1 = LetterToVector("n")
+        o1 = LetterToVector("o")
+        p1 = LetterToVector("p")
+        q1 = LetterToVector("q")
+        r1 = LetterToVector("r")
+        s1 = LetterToVector("s")
+        t1 = LetterToVector("t")
+        u1 = LetterToVector("u")
+        v1 = LetterToVector("v")
+        w1 = LetterToVector("w")
+        x1 = LetterToVector("x")
+        y1 = LetterToVector("y")
+        z1 = LetterToVector("z")
 
 
         print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
