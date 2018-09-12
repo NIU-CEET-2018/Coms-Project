@@ -33,37 +33,10 @@ class SampleListener(Leap.Listener):
         frame = controller.frame()
 
         #create letter identifier for data spreadsheet
-        def LetterToVector(letter):
+        def letter_to_vector(letter):
             v=[0]*26
             v[ord(letter)-ord("a")]=1
             return v
-        a1 = LetterToVector("a")
-        b1 = LetterToVector("b")
-        c1 = LetterToVector("c")
-        d1 = LetterToVector("d")
-        e1 = LetterToVector("e")
-        f1 = LetterToVector("f")
-        g1 = LetterToVector("g")
-        h1 = LetterToVector("h")
-        i1 = LetterToVector("i")
-        j1 = LetterToVector("j")
-        k1 = LetterToVector("k")
-        l1 = LetterToVector("l")
-        m1 = LetterToVector("m")
-        n1 = LetterToVector("n")
-        o1 = LetterToVector("o")
-        p1 = LetterToVector("p")
-        q1 = LetterToVector("q")
-        r1 = LetterToVector("r")
-        s1 = LetterToVector("s")
-        t1 = LetterToVector("t")
-        u1 = LetterToVector("u")
-        v1 = LetterToVector("v")
-        w1 = LetterToVector("w")
-        x1 = LetterToVector("x")
-        y1 = LetterToVector("y")
-        z1 = LetterToVector("z")
-
 
         print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
               frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
@@ -117,64 +90,12 @@ class SampleListener(Leap.Listener):
                         data.append(vectorz)
 
                 #adds the letter list to the end of the data list
+                letter=letter.lower()[0]
                 print "letter equals: %s" % (letter)
-                if (letter == 'a\r'):
-                    data.extend(a1)
-                elif (letter == 'b\r'):
-                    data.extend(b1)
-                elif (letter == 'c\r'):
-                    data.extend(c1)
-                elif (letter == 'd\r'):
-                    data.extend(d1)
-                elif (letter == 'e\r'):
-                    data.extend(e1)
-                elif (letter == 'f\r'):
-                    data.extend(f1)
-                elif (letter == 'g\r'):
-                    data.extend(g1)
-                elif (letter == 'h\r'):
-                    data.extend(h1)
-                elif (letter == 'i\r'):
-                    data.extend(i1)
-                elif (letter == 'j\r'):
-                    data.extend(j1)
-                elif (letter == 'k\r'):
-                    data.extend(k1)
-                elif (letter == 'l\r'):
-                    data.extend(l1)
-                elif (letter == 'm\r'):
-                    data.extend(m1)
-                elif (letter == 'n\r'):
-                    data.extend(n1)
-                elif (letter == 'o\r'):
-                    data.extend(o1)
-                elif (letter == 'p\r'):
-                    data.extend(p1)
-                elif (letter == 'q\r'):
-                    data.extend(q1)
-                elif (letter == 'r\r'):
-                    data.extend(r1)
-                elif (letter == 's\r'):
-                    data.extend(s1)
-                elif (letter == 't\r'):
-                    data.extend(t1)
-                elif (letter == 'u\r'):
-                    data.extend(u1)
-                elif (letter == 'v\r'):
-                    data.extend(v1)
-                elif (letter == 'w\r'):
-                    data.extend(w1)
-                elif (letter == 'x\r'):
-                    data.extend(x1)
-                elif (letter == 'y\r'):
-                    data.extend(y1)
-                elif (letter == 'z\r'):
-                    data.extend(z1)
+                if letter>='a' and letter<='z':
+                    data.extend(letter_to_vector(letter[0]))
                 else:
                     print "Character is undefined."
-                    
-
-
 
                 print "     Data: %s" % (data)   
                 writer.writerow(data)
