@@ -7,7 +7,10 @@ letter = ''
 
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-    bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
+    bones = {'Metacarpal'  : Bone.TYPE_METACARPAL,
+             'Proximal'    : Bone.TYPE_PROXIMAL,
+             'Intermediate': Bone.TYPE_INTERMEDIATE,
+             'Distal'      : Bone.TYPE_DISTAL}
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
 
     def on_init(self, controller):
@@ -66,8 +69,8 @@ class SampleListener(Leap.Listener):
                         finger.width)
 
                     # Get bones
-                    for b in range(0, 4):
-                        bone = finger.bone(b)
+                    for b in self.bones:
+                        bone = self.bones[b]
                         #subtract bone vector from palm vector
                         vectorx = bone.next_joint.x - hand_center.x
                         vectory = bone.next_joint.y - hand_center.y
@@ -75,7 +78,7 @@ class SampleListener(Leap.Listener):
 
                         #printing for our use
                         print "      Bone: %s, vectorx: %s, vectory: %s, vectorz: %s" % (
-                            self.bone_names[bone.type],
+                            b,
                             vectorx,
                             vectory,
                             vectorz)
