@@ -114,13 +114,15 @@ def start():
 
 def valid_input():
     LetterDict = pickle.load( open( "letterdict.p", "rb"))
+    i = [0]*100
     if letter in LetterDict.keys():
         pass
     else:
         x = raw_input("This character is undefined. Would you like to define it? y/n: ")
-        if x == 'y\r':
-            l = len(LetterDict.keys()) + 1
-            LetterDict[letter] = [int(x) for x in list('{0:012b}'.format(l))]
+        if x == 'y':
+            l = len(LetterDict.keys())
+            i[l] = 1
+            LetterDict[letter] = i
             pickle.dump(LetterDict, open("letterdict.p", "wb"))
         else:
             main()
