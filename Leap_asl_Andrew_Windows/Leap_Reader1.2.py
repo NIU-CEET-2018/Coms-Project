@@ -2,15 +2,15 @@ import Leap, sys, thread, time
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 import csv
 import cPickle as pickle
+import ctypes
+import os
 
 letter = ''
+w ='0'
 
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-    bones = {'Metacarpal'  : Bone.TYPE_METACARPAL,
-             'Proximal'    : Bone.TYPE_PROXIMAL,
-             'Intermediate': Bone.TYPE_INTERMEDIATE,
-             'Distal'      : Bone.TYPE_DISTAL}
+    bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
 
     def on_init(self, controller):
@@ -18,6 +18,12 @@ class SampleListener(Leap.Listener):
 
     def on_connect(self, controller):
         print "Motion Sensor Connected"
+
+        # Enable gestures
+        controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE);
+        controller.enable_gesture(Leap.Gesture.TYPE_KEY_TAP);
+        controller.enable_gesture(Leap.Gesture.TYPE_SCREEN_TAP);
+        controller.enable_gesture(Leap.Gesture.TYPE_SWIPE);
 
     def on_disconnect(self, controller):
         # Note: not dispatched when running in a debugger.
@@ -30,6 +36,8 @@ class SampleListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         LetterDict = pickle.load( open ( "letterdict.p", "rb"))
+
+        global w
 
         print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
               frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
@@ -63,8 +71,8 @@ class SampleListener(Leap.Listener):
                         finger.width)
 
                     # Get bones
-                    for b in self.bones:
-                        bone = self.bones[b]
+                    for b in range(0, 4):
+                        bone = finger.bone(b)
                         #subtract bone vector from palm vector
                         vectorx = bone.next_joint.x - hand_center.x
                         vectory = bone.next_joint.y - hand_center.y
@@ -72,7 +80,7 @@ class SampleListener(Leap.Listener):
 
                         #printing for our use
                         print "      Bone: %s, vectorx: %s, vectory: %s, vectorz: %s" % (
-                            b,
+                            self.bone_names[bone.type],
                             vectorx,
                             vectory,
                             vectorz)
@@ -88,7 +96,19 @@ class SampleListener(Leap.Listener):
                 
                 print "     Data: %s" % (data)   
                 writer.writerow(data)
-                    
+                
+                save_path = 'C:\Users\Andrew\Documents\Source\Leap_asl_Andrew_Windows\Full_Data_Folder'
+                serialized_tuple = frame.serialize
+                serialized_data = serialized_tuple[0]
+                serialized_length = serialized_tuple[1]
+                data_address = serialized_data.cast().__long__()
+                buffer = (ctypes.c_ubyte * serialized_length).from_address(data_address)
+                with open(os.path.join(save_path, letter + w + '.data'), 'wb') as data_file: 
+                    data_file.write(buffer)
+                
+                w = str(int(w)+1)
+
+
     def state_string(self, state):
         if state == Leap.Gesture.STATE_START:
             return "STATE_START"
