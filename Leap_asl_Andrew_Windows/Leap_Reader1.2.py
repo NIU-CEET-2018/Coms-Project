@@ -4,6 +4,8 @@ import csv
 import cPickle as pickle
 import ctypes
 import os
+from Leap import Bone
+
 
 letter = ''
 w ='0'
