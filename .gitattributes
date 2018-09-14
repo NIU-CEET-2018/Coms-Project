@@ -18,8 +18,12 @@
 *.pyo 		binary
 
 # Auto Convert Line Endings
-===========================
+# =========================
 *			text=auto
+
+# Ignore all differences in line endings
+# ======================================
+**	*	*	-crlf
 
 # Note: .db, .p, and .pkl files are associated
 # with the python modules ``pickle``, ``dbm.*``,
