@@ -97,6 +97,7 @@ class SampleListener(Leap.Listener):
                 print "     Data: %s" % (data)   
                 writer.writerow(data)
                 
+                #saves full frame data. must chosse save path specific to your pc
                 save_path = 'C:\Users\Andrew\Documents\Source\Leap_asl_Andrew_Windows\Full_Data_Folder'
                 serialized_tuple = frame.serialize
                 serialized_data = serialized_tuple[0]
