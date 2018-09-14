@@ -23,7 +23,7 @@
 
 # Ignore all differences in line endings
 # ======================================
-**	*	*	-crlf
+*			-crlf
 
 # Note: .db, .p, and .pkl files are associated
 # with the python modules ``pickle``, ``dbm.*``,
