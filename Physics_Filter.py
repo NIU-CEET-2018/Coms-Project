@@ -14,6 +14,7 @@ import numpy
 #       clean up code
 #       finish up Kalman Filter Implementation
 #       feed it data and plot to see if it works the way we want it to
+#       stop thinking in terms of C++
 
 class PhysicsFilter:
     
@@ -97,13 +98,16 @@ class PhysicsFilter:
                 
                 #evaluate the good ole fashioned way
                 
+                index = 0
+                
                 while(index < 2):
                     
-                    while(!controller.frame().hand.is_valid):            #gather some valid frames, this is probably where the hand is
+                    while(~controller.frame().hand.is_valid):            #gather some valid frames, this is probably where the hand is
                         time.sleep(0.02)
                         
                     frame[index] = controller.frame()
                     hand[index] = frame[index].hand
+                    index += 1
                     
                 #average all the frames' data
                 previousHand.timestamp = (frame[1].timestamp + frame[0].timestamp + currentFrame.timestamp)/3
@@ -158,7 +162,7 @@ class PhysicsFilter:
         while(index < numFrames):                                      #grab a lot of frames
             frame[index] = controller.frame((numFrames - index))
             hand[index] = frame[index].hand
-            index++
+            index += 1
         
         if (sizeof(itertools.ifilterfalse(hand.is_valid, hand[index]) > 0):
         #if one of those frames don't contain a hand, flag as invalid
@@ -181,11 +185,13 @@ class PhysicsFilter:
         #NOTE:  StatsFilter is memory extensive, requires a lot of calculations and may lag but can potentially be most accurate
             
     def KalFilter(self, numFrames, previousHand, predictedHand):
+        
+        index = 0
             
         while (index < numFrames):
             frame[index] = controller.frame((numFrames - index))
             hand[index] = frame[index].hand                
-            index++
+            index += 1
             
         #average all the data points and make that currentHand
             
