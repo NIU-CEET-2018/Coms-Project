@@ -7,14 +7,15 @@ import Leap
 import itertools
 import numpy
 
-#TODO:  test out how tuples work or ask murray
-#       ask murray a lot of questions about python in general
-#       ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
-#       fix possible syntax errors
-#       clean up code
-#       finish up Kalman Filter Implementation
-#       feed it data and plot to see if it works the way we want it to
-#       stop thinking in terms of C++
+#TODO:
+# - [ ] test out how tuples work or ask murray
+# - [ ] ask murray a lot of questions about python in general
+# - [ ] ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
+# - [ ] fix possible syntax errors
+# - [ ] clean up code
+# - [ ] finish up Kalman Filter Implementation
+# - [ ] feed it data and plot to see if it works the way we want it to
+# - [ ] stop thinking in terms of C++
 
 class PhysicsFilter:
     
