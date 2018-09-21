@@ -9,6 +9,7 @@ import math
 
 letter = ''
 r =''
+data_dir ='./Data_Folder/'
 
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
@@ -52,10 +53,9 @@ class SampleListener(Leap.Listener):
 
             #create data list
             data =[]
-            dir ='E:\Github\Coms-Project\Leap_asl_Andrew_Windows\Data_Folder'
         
             #open csv file to write to
-            with open(os.path.join(dir,r), 'a') as csvfile:
+            with open(os.path.join(data_dir,r), 'a') as csvfile:
                 writer = csv.writer(csvfile, delimiter = ',', lineterminator = '\n')
 
                 #add new vectors to data list
@@ -133,16 +133,13 @@ def start():
 
 def create_file():
     global r
-    directory = 'E:\Github\Coms-Project\Leap_asl_Andrew_Windows\Data_Folder'
 
     j = 0
     while os.path.exists(letter + "%s.csv" % j):
         j += 1
 
-    dir ='E:\Github\Coms-Project\Leap_asl_Andrew_Windows\Data_Folder'
-
     r = letter + "%s.csv" % j
-    with open(os.path.join(dir, letter + "%s.csv" % j), 'a') as csvfile:
+    with open(data_dir+letter + str(j)+".csv", 'a+') as csvfile:
         writer = csv.writer(csvfile, delimiter = ',', lineterminator = '\n')
         header = ['normalx', 'normaly', 'normalz', 'directionx', 'directiony','directionz', 
         'hand centerx', 'hand centery', 'hand centerz', 'hand velocityx', 'hand velocityy', 'hand velocityz', 
