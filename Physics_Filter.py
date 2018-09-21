@@ -7,14 +7,35 @@ import Leap
 import itertools
 import numpy
 
-#TODO:  test out how tuples work or ask murray
-#       ask murray a lot of questions about python in general
-#       ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
-#       fix possible syntax errors
-#       clean up code
-#       finish up Kalman Filter Implementation
-#       feed it data and plot to see if it works the way we want it to
-#       stop thinking in terms of C++
+#TODO:
+# - [ ] test out how tuples work or ask murray
+#   Tuples act the same as C++ vectors for the most part (they have some extra features)
+#   For an example
+#   >>> tup = ("cat", "hat", "bat")
+#   >>> x,y,z = tup
+#   >>> print(y)
+#   'hat'
+#   >>> for v in tup:
+#   ...     print("it's a",v)
+#   ...
+#   "it's a cat"
+#   "it's a hat"
+#   "it's a bat"
+#   # end example
+# - [ ] ask murray a lot of questions about python in general
+# - [ ] ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
+#   Generaly python dosen't have pointers and values, it has a diffrent divide.
+#   We don't have to wory about it until it dose something wrong, then we'll get some code for deep copying.
+# - [ ] fix possible syntax errors
+# - [ ] clean up code
+#   I'm going to let you change the code over more to pure maths before I make any comments here.
+#   The general jist of it is, you're making a function that takes a frame and
+#           validates it, some persistant variables are expected.
+#   But working on the maths is more important than the code at the moment.
+#           (Also we don't have any sample data to test with yet.)
+# - [ ] finish up Kalman Filter Implementation
+# - [ ] feed it data and plot to see if it works the way we want it to
+# - [ ] stop thinking in terms of C++
 
 class PhysicsFilter:
     

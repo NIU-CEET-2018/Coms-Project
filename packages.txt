@@ -1,5 +1,9 @@
 python3-pip
 python2-pip
+python-pip
 sox
 libsox-fmt-mp3
 libatlas-base-dev
+python2-six
+python3-six
+python-six
