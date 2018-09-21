@@ -32,10 +32,10 @@ test-core:
 
 .phony: reqs
 reqs:
-	dpkg -V $$(xargs < packages.txt) || sudo apt-get install -y -q $$(xargs < packages.txt)
-	pip3 -q install -r requirements3.txt
-	pip2 -q install -r requirements2.txt
-	dpkg -V Leap || sudo ./Install_Leap_Deamon.sh
+	-dpkg -V $$(xargs < packages.txt) 2>&1 |cut -d\' -f2| while read p; do sudo apt-get install -y -q $$p; done
+	-sudo python3 -m pip -q install --upgrade -r requirements3.txt
+	-sudo python2 -m pip -q install --upgrade -r requirements2.txt
+	-dpkg -V Leap || sudo ./Install_Leap_Deamon.sh
 
 .phony: todos
 todos:
