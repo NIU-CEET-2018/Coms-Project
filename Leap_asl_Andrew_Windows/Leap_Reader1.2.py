@@ -1,19 +1,15 @@
 #!/usr/bin/python2
-import Leap, sys, thread, time
-from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
-import csv
-import ctypes
-import os
+import Leap
+import csv, ctypes, os, sys, thread, time, math
 import numpy as np
-import math
 
-letter = ''
-r =''
 data_dir ='./Data_Folder/'
+letter = ''
+csv_path =''
 
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-    bones = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal' ]
+    bones = ['Metacarpal', 'Proximal', 'Medial', 'Distal' ]
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
 
     def on_init(self, controller):
@@ -32,7 +28,6 @@ class SampleListener(Leap.Listener):
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
-
 
         print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
               frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
@@ -55,8 +50,9 @@ class SampleListener(Leap.Listener):
             data =[]
         
             #open csv file to write to
-            with open(os.path.join(data_dir,r), 'a') as csvfile:
-                writer = csv.writer(csvfile, delimiter = ',', lineterminator = '\n')
+            with open(csv_path, 'a') as csv_file:
+                # TODO: perf check opeing the file on each frame
+                writer = csv.writer(csv_file, delimiter = ',', lineterminator = '\n')
 
                 #add new vectors to data list
                 data.append(hand_center[0])
@@ -98,6 +94,10 @@ class SampleListener(Leap.Listener):
                     joint_angle1 = math.cos(np.dot(bone1, bone2))/(np.linalg.norm(bone1) * np.linalg.norm(bone2))
                     joint_angle2 = math.cos(np.dot(bone2, bone3))/(np.linalg.norm(bone2) * np.linalg.norm(bone3))
 
+                    # TODO: Put the above data in the desired canonical form.
+                    # The 3 angles between the bones in the direction of normal
+                    # The 3 angle beteen the bones and the plane of (normal X prior bone)
+
                     print "deviation1: %s, deviation2: %s, deviation3: %s, jointangle1: %s, jointangle2: %s" % (
                         deviation1, deviation2, deviation3, joint_angle1, joint_angle2
                     )
@@ -127,27 +127,41 @@ class SampleListener(Leap.Listener):
 def start():
     # Takes in starting inputs
     global letter
-    letter = str(raw_input("Input letter:"))
+    letter = str(raw_input("Input letter: "))
     create_file()
     raw_input("Press enter to record.")
 
 def create_file():
-    global r
+    global csv_path
+
+    # If the folder doesn't exist warn and create it.
+    if not os.path.exists(data_dir):
+        print "Couldn't find data directory, createing."
+        os.makedirs(data_dir)
 
     j = 0
-    while os.path.exists(letter + "%s.csv" % j):
+    while os.path.exists(data_dir+letter + str(j)+".csv"):
         j += 1
 
-    r = letter + "%s.csv" % j
-    with open(data_dir+letter + str(j)+".csv", 'a+') as csvfile:
-        writer = csv.writer(csvfile, delimiter = ',', lineterminator = '\n')
-        header = ['normalx', 'normaly', 'normalz', 'directionx', 'directiony','directionz', 
-        'hand centerx', 'hand centery', 'hand centerz', 'hand velocityx', 'hand velocityy', 'hand velocityz', 
-        'deviationthumb1', 'deviationthumb2', 'deviationthumb3', 'jointanglethumb1', 'jointanglethumb2',
-        'deviationindex1', 'deviationindex2', 'deviationindex3', 'jointangleindex1', 'jointangleindex2',
-        'deviationmiddle1', 'deviationmiddle2', 'deviationmiddle3', 'jointanglemiddle1', 'jointanglemiddle2',
-        'deviationring1', 'deviationring2', 'deviationring3', 'jointanglering1', 'jointanglering2',
-        'deviationpinky1', 'deviationpinky2', 'deviationpinky3', 'jointanglepinky1', 'jointanglepinky2']
+    csv_path = data_dir+letter + str(j)+".csv"
+    with open(csv_path, 'a+') as csv_file:
+        writer = csv.writer(csv_file, delimiter = ',', lineterminator = '\n')
+        header = [
+            'Palm Normal x'       , 'Palm Normal y'       , 'Palm Normal z'       ,
+            'Palm Direction x'    , 'Palm Direction y'    , 'Palm Direction z'    ,
+            'Palm Center x'       , 'Palm Center y'       , 'Palm Center z'       ,
+            'Palm Velocity x'     , 'Palm Velocity y'     , 'Palm Velocity z'     ,
+            'Thumb Deviation 1'   , 'Thumb Deviation 2'   , 'Thumb Deviation 3'   ,
+            'Thumb Joint Angle1'  , 'Thumb Joint Angle2'  ,
+            'Index Deviation 1'   , 'Index Deviation 2'   , 'Index Deviation 3'   ,
+            'Index Joint Angle 1' , 'Index Joint Angle 2' ,
+            'Middle Deviation 1'  , 'Middle Deviation 2'  , 'Middle Deviation 3'  ,
+            'Middle Joint Angle 1', 'Middle Joint Angle 2',
+            'Ring Deviation 1'    , 'Ring Deviation 2'    , 'Ring Deviation 3'    ,
+            'Ring Joint Angle 1'  , 'Ring Joint Angle 2'  ,
+            'Pinky Deviation 1'   , 'Pinky Deviation 2'   , 'Pinky Deviation 3'   ,
+            'Pinky Joint Angle 1' , 'Pinky Joint Angle 2' ,
+        ]
         writer.writerow(header)
 
 def main():
