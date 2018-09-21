@@ -1,21 +1,17 @@
 import Leap, sys, thread, time
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 import csv
-import cPickle as pickle
 import ctypes
 import os
-from Leap import Bone
-
+import numpy as np
+import math
 
 letter = ''
-w ='0'
+r =''
 
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-    bones = {'Metacarpal'  : Bone.TYPE_METACARPAL,
-             'Proximal'    : Bone.TYPE_PROXIMAL,
-             'Intermediate': Bone.TYPE_INTERMEDIATE,
-             'Distal'      : Bone.TYPE_DISTAL}
+    bones = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal' ]
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
 
     def on_init(self, controller):
@@ -34,9 +30,7 @@ class SampleListener(Leap.Listener):
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
-        LetterDict = pickle.load( open ( "letterdict.p", "rb"))
 
-        global w
 
         print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
               frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
@@ -46,20 +40,38 @@ class SampleListener(Leap.Listener):
 
             handType = "Left hand" if hand.is_left else "Right hand"
 
-            print "  %s, id %d, positionx: %s, positiony: %s, positionz: %s" % (
-                handType, hand.id, hand.palm_position.x, hand.palm_position.y, hand.palm_position.z)
+             # Get the hand's normal vector, direction, and position
+            normal = [hand.palm_normal.x, hand.palm_normal.y, hand.palm_normal.z]
+            direction = [hand.direction.x, hand.direction.y, hand.direction.z]
+            hand_center = [hand.palm_position.x, hand.palm_position.x, hand.palm_position.z]
+            velocity = [hand.palm_velocity.x, hand.palm_velocity.y, hand.palm_velocity.z]
 
-            # Get the hand's normal vector, direction, and position
-            normal = hand.palm_normal
-            direction = hand.direction
-            hand_center = hand.palm_position
+            print "  %s, id %d, hand position: %s, hand direction: %s, hand normal: %s, hand velocity: %s" % (
+                handType, hand.id, hand_center, direction, normal, velocity)
 
             #create data list
             data =[]
+            dir ='E:\Github\Coms-Project\Leap_asl_Andrew_Windows\Data_Folder'
         
             #open csv file to write to
-            with open('data.csv', 'a') as csvfile:
+            with open(os.path.join(dir,r), 'a') as csvfile:
                 writer = csv.writer(csvfile, delimiter = ',', lineterminator = '\n')
+
+                #add new vectors to data list
+                data.append(hand_center[0])
+                data.append(hand_center[1])
+                data.append(hand_center[2])
+                data.append(direction[0])
+                data.append(direction[1])
+                data.append(direction[2])
+                data.append(normal[0])
+                data.append(normal[1])
+                data.append(normal[2])
+                data.append(velocity[0])
+                data.append(velocity[1])
+                data.append(velocity[2])
+
+                print data
 
                 # Get fingers
                 for finger in hand.fingers:
@@ -70,44 +82,33 @@ class SampleListener(Leap.Listener):
                         finger.width)
 
                     # Get bones
-                    for b in self.bones:
-                        bone = self.bones[b]
-                        #subtract bone vector from palm vector
-                        vectorx = bone.next_joint.x - hand_center.x
-                        vectory = bone.next_joint.y - hand_center.y
-                        vectorz = bone.next_joint.z - hand_center.z
+                    bone1 = [finger.bone(1).direction.x, finger.bone(1).direction.y, finger.bone(1).direction.z]
+                    bone2 = [finger.bone(2).direction.x, finger.bone(2).direction.y, finger.bone(2).direction.z]
+                    bone3 = [finger.bone(3).direction.x, finger.bone(3).direction.y, finger.bone(3).direction.z]
 
-                        #printing for our use
-                        print "      Bone: %s, vectorx: %s, vectory: %s, vectorz: %s" % (
-                            b,
-                            vectorx,
-                            vectory,
-                            vectorz)
+                    print "Bone1: %s Bone2: %s Bones3: %s" % (bone1, bone2, bone3)
 
-                        #add new vectors to data list
-                        data.append(vectorx)
-                        data.append(vectory)
-                        data.append(vectorz)
+                    #angle of deviation of each bone from straight
+                    deviation1 = math.cos(np.dot(bone1, direction))/(np.linalg.norm(bone1) * np.linalg.norm(direction))
+                    deviation2 = math.cos(np.dot(bone2, direction))/(np.linalg.norm(bone1) * np.linalg.norm(direction))
+                    deviation3 = math.cos(np.dot(bone3, direction))/(np.linalg.norm(bone1) * np.linalg.norm(direction))
 
-                #adds the letter list to the end of the data list
-                print "letter equals: %s" % (letter)
-                data.extend(LetterDict[letter])
-                
-                print "     Data: %s" % (data)   
+                    # between each bone
+                    joint_angle1 = math.cos(np.dot(bone1, bone2))/(np.linalg.norm(bone1) * np.linalg.norm(bone2))
+                    joint_angle2 = math.cos(np.dot(bone2, bone3))/(np.linalg.norm(bone2) * np.linalg.norm(bone3))
+
+                    print "deviation1: %s, deviation2: %s, deviation3: %s, jointangle1: %s, jointangle2: %s" % (
+                        deviation1, deviation2, deviation3, joint_angle1, joint_angle2
+                    )
+                    data.append(deviation1)
+                    data.append(deviation2)
+                    data.append(deviation3)
+                    data.append(joint_angle1)
+                    data.append(joint_angle2)
+
+
                 writer.writerow(data)
-                
-                #saves full frame data. must chosse save path specific to your pc
-                save_path = 'C:\Users\Andrew\Documents\Source\Leap_asl_Andrew_Windows\Full_Data_Folder'
-                serialized_tuple = frame.serialize
-                serialized_data = serialized_tuple[0]
-                serialized_length = serialized_tuple[1]
-                data_address = serialized_data.cast().__long__()
-                buffer = (ctypes.c_ubyte * serialized_length).from_address(data_address)
-                with open(os.path.join(save_path, letter + w + '.data'), 'wb') as data_file: 
-                    data_file.write(buffer)
-                
-                w = str(int(w)+1)
-
+    
 
     def state_string(self, state):
         if state == Leap.Gesture.STATE_START:
@@ -126,23 +127,30 @@ def start():
     # Takes in starting inputs
     global letter
     letter = str(raw_input("Input letter:"))
-    valid_input()
+    create_file()
     raw_input("Press enter to record.")
 
-def valid_input():
-    LetterDict = pickle.load( open( "letterdict.p", "rb"))
-    i = [0]*100
-    if letter in LetterDict.keys():
-        pass
-    else:
-        x = raw_input("This character is undefined. Would you like to define it? y/n: ")
-        if x == 'y':
-            l = len(LetterDict.keys())
-            i[l] = 1
-            LetterDict[letter] = i
-            pickle.dump(LetterDict, open("letterdict.p", "wb"))
-        else:
-            main()
+def create_file():
+    global r
+    directory = 'E:\Github\Coms-Project\Leap_asl_Andrew_Windows\Data_Folder'
+
+    j = 0
+    while os.path.exists(letter + "%s.csv" % j):
+        j += 1
+
+    dir ='E:\Github\Coms-Project\Leap_asl_Andrew_Windows\Data_Folder'
+
+    r = letter + "%s.csv" % j
+    with open(os.path.join(dir, letter + "%s.csv" % j), 'a') as csvfile:
+        writer = csv.writer(csvfile, delimiter = ',', lineterminator = '\n')
+        header = ['normalx', 'normaly', 'normalz', 'directionx', 'directiony','directionz', 
+        'hand centerx', 'hand centery', 'hand centerz', 'hand velocityx', 'hand velocityy', 'hand velocityz', 
+        'deviationthumb1', 'deviationthumb2', 'deviationthumb3', 'jointanglethumb1', 'jointanglethumb2',
+        'deviationindex1', 'deviationindex2', 'deviationindex3', 'jointangleindex1', 'jointangleindex2',
+        'deviationmiddle1', 'deviationmiddle2', 'deviationmiddle3', 'jointanglemiddle1', 'jointanglemiddle2',
+        'deviationring1', 'deviationring2', 'deviationring3', 'jointanglering1', 'jointanglering2',
+        'deviationpinky1', 'deviationpinky2', 'deviationpinky3', 'jointanglepinky1', 'jointanglepinky2']
+        writer.writerow(header)
 
 def main():
     # Create a sample listener and controller
@@ -163,7 +171,6 @@ def main():
     finally:
         # Remove the sample listener when done
         controller.remove_listener(listener)
-
 
 if __name__ == "__main__":
     main()
