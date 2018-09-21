@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 import Leap, sys, thread, time
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 import csv
