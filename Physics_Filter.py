@@ -8,7 +8,7 @@ import itertools
 import numpy
 
 #TODO:
-# - [ ] test out how tuples work or ask murray
+# - [x] test out how tuples work or ask murray
 #   Tuples act the same as C++ vectors for the most part (they have some extra features)
 #   For an example
 #   >>> tup = ("cat", "hat", "bat")
@@ -23,7 +23,7 @@ import numpy
 #   "it's a bat"
 #   # end example
 # - [ ] ask murray a lot of questions about python in general
-# - [ ] ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
+# - [x] ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
 #   Generaly python dosen't have pointers and values, it has a diffrent divide.
 #   We don't have to wory about it until it dose something wrong, then we'll get some code for deep copying.
 # - [ ] fix possible syntax errors
@@ -38,6 +38,82 @@ import numpy
 # - [ ] stop thinking in terms of C++
 
 class PhysicsFilter:
+    
+    def getVar(self, dataset):
+        return sqrt(numpy.apply_over_axes(numpy.std,dataset))
+    
+    # NOTE:
+    # sample data to get process variance and sensor variance of position, velocity, and acceleration
+    # keep her hand as still as she can get -sensor variance
+    # get her to spell her name -process variance
+    
+    def getCovarxva(self, positionData, velocityData, accelerationData):
+        positionCovar = getVar(positionData)
+        velocityCovar = getVar(velocityData)
+        accelerationCovar = getVar(accelerationData)
+        return numpy.diag([positionCovar, velocityCovar, accelerationCovar])
+    
+    # NOTE:
+    # create for process and sensor noise
+    
+    def getCovarxv(self, positionData, velocityData):
+        positionCovar = getVar(positionData)
+        velocityCovar = getVar(velocityData)
+        return numpy.diag([positionCovar, velocityCovar])
+    
+    
+    def predictxva(self, stateVectors, deltaT): 
+        stateVectors = numpy.reshape(stateVectors, (3, 1)) 
+        stateTransition = numpy.matrix('1, deltaT, deltaT^2; 0, 1, deltaT; 0, 0, 1') 
+        return stateTransition*stateVector
+    
+    # NOTE: 
+    # Must order the stateVector in position, velocity, acceleration for this model 
+    # stateVector = [[position],
+    #                [velocity],
+    #                [acceleration]]
+    # stateTransition = [[1, deltaT, deltaT^2],
+    #                    [0,      1,   deltaT],
+    #                    [0,      0,        1]]
+    # Another translation of the maths above
+    # stateVector         stateTransition
+    # position_k        : position_(k-1) + velocity_(k-1)*deltaT + acceleration_(k-1)*deltaT^2
+    # velocity_k        :                  velocity_(k-1)        + acceleration_(k-1)*deltaT
+    # acceleration_k    :                                          acceleration_(k-1)
+    
+    # TODO: 
+    # Make this code tuple friendly
+    # We might have to initialize the stateTransition as this:
+    # stateTransition = [[(1,1,1), (deltaT,deltaT,deltaT), (deltaT^2,deltaT^2,deltaT^2)],
+    #                    [(0,0,0), (1,1,1), (deltaT,deltaT,deltaT)],
+    #                    [(0,0,0), (0,0,0), (1,1,1)]]
+       
+    def predictxv(self, stateVectors, deltaT):
+        stateVectors = numpy.reshape(stateVectors,(2,1))
+        stateTransition = numpy.matrix('1, deltaT; 0, 1')
+        return stateTransition*stateVector
+
+    # NOTE: 
+    # Must order the stateVector in position and velocity for this model
+    # stateVector = [[position],
+    #                [velocity]]
+    # stateTransition = [[1, deltaT],
+    #                    [0,      1]]
+    # Another translation of the maths above
+    # stateVector         stateTransition
+    # position_k        : position_(k-1) + velocity_(k-1)*deltaT
+    # velocity_k        :                  velocity_(k-1)
+    
+    # TODO:
+    # Make this code tuple friendly
+    
+    def updatexva(self, stateVectors, stateCovar, deltaT):
+        
+
+    def setPalmOrigin(self, palm_position, dataset):
+        for data in dataset:
+            dataset = dataset - palm_position
+        return dataset
     
     def controlLimit(self, numPoints, threshold):
         
@@ -205,24 +281,18 @@ class PhysicsFilter:
         #TODO:  all of the code essentially
         #NOTE:  StatsFilter is memory extensive, requires a lot of calculations and may lag but can potentially be most accurate
             
-    def KalFilter(self, numFrames, previousHand, predictedHand):
+    def KalFilter(self, currentHand, previousHand, predictedHand):
         
-        index = 0
-            
-        while (index < numFrames):
-            frame[index] = controller.frame((numFrames - index))
-            hand[index] = frame[index].hand                
-            index += 1
-            
-        #average all the data points and make that currentHand
-            
-        #save some kalman filter variables and other nifty things
+        xk = numpy.matrix('positionk, velocityk')
+        transitionMatrix = numpy.matrix('1, deltaT; 0, 1')
+            #predict position = previous position + deltaT previous velocity and velocity remains constant
+        
         #residuals = abs(predictedHand - currentHand)
         #covariance noise = sqrt(predictedHand.stdDev - currentHand.stdDev)
         #model will be based on x(t) + v(t) or x(t) + x'(t) as only velocity and position is readily available
-        #can infer a(t) or x''(t) but that might be unnecessary
+        
         #k+1 is our predictedHand
-        #k is our currentHand
+        #k is our currentHand or observedHand
         #k-1 is our previousHand
             
             return previousHand, predictedHand
