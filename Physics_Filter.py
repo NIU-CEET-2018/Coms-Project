@@ -54,13 +54,17 @@ class PhysicsFilter:
         return numpy.diag([positionCovar, velocityCovar, accelerationCovar])
     
     # NOTE:
-    # create for process and sensor noise
+    # sample data
+    # create for process and sensor noise covariance matrix
     
     def getCovarxv(self, positionData, velocityData):
         positionCovar = getVar(positionData)
         velocityCovar = getVar(velocityData)
         return numpy.diag([positionCovar, velocityCovar])
     
+    # NOTE:
+    # sample data
+    # create for process and sensor noise covariance matrix
     
     def predictxva(self, stateVectors, deltaT): 
         stateVectors = numpy.reshape(stateVectors, (3, 1)) 
@@ -109,6 +113,9 @@ class PhysicsFilter:
     
     def updatexva(self, stateVectors, stateCovar, deltaT):
         
+        
+    # TODO:
+    # Figure out how to do this part now
 
     def setPalmOrigin(self, palm_position, dataset):
         for data in dataset:
