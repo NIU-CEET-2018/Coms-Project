@@ -5,30 +5,36 @@ all: test-code run
 run:
 	python3 main.py
 
+test_file?=*
+
 .phony: test
 test: test-format test-code-and-coverage todos
 
+.phony: test-existance
+test-existance:
+	@test "$(test_file)" = "*" || test -f $(test_file).py
+
 .phony: test-format
-test-format:
-	python3 -m pylint *.py
+test-format: test-existance
+	python3 -m pylint $(test_file).py
 	echo
-	python3 -m flake8 *.py
+	python3 -m flake8 $(test_file).py
 	echo
 
 .phony: test-code-and-coverage
-test-code-and-coverage:
+test-code-and-coverage: test-existance
 	python3 -m coverage erase
-	python3 -m coverage run -m unittest *_test.py
+	python3 -m coverage run -m unittest $(test_file)_test.py
 	python3 -m coverage report -m --fail-under=80
 	echo
 	python2 -m coverage erase
-	python2 -m coverage run -m unittest *_test2.py
+	python2 -m coverage run -m unittest $(test_file)_test2.py
 	python2 -m coverage report -m --fail-under=80
 	echo
 
 .phony: test-code
-test-core:
-	python3 -m unittest *_test.py
+test-core: test-existance
+	python3 -m unittest $(test_file)_test.py
 
 .phony: reqs
 reqs:
