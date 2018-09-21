@@ -7,6 +7,8 @@ data_dir ='./Data_Folder/'
 letter = ''
 csv_path =''
 
+debug_leap_prints = True
+
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
     bones = ['Metacarpal', 'Proximal', 'Medial', 'Distal' ]
@@ -29,8 +31,9 @@ class SampleListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
 
-        print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
-              frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
+        if debub_mode:
+            print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
+                  frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
 
         # Get hands
         for hand in frame.hands:
@@ -43,8 +46,9 @@ class SampleListener(Leap.Listener):
             hand_center = [hand.palm_position.x, hand.palm_position.x, hand.palm_position.z]
             velocity = [hand.palm_velocity.x, hand.palm_velocity.y, hand.palm_velocity.z]
 
-            print "  %s, id %d, hand position: %s, hand direction: %s, hand normal: %s, hand velocity: %s" % (
-                handType, hand.id, hand_center, direction, normal, velocity)
+            if debug_leap_prints:
+                print "  %s, id %d, hand position: %s, hand direction: %s, hand normal: %s, hand velocity: %s" % (
+                      handType, hand.id, hand_center, direction, normal, velocity)
 
             #create data list
             data =[]
@@ -72,18 +76,20 @@ class SampleListener(Leap.Listener):
 
                 # Get fingers
                 for finger in hand.fingers:
-                    print "    %s finger, id: %d, length: %fmm, width: %fmm" % (
-                        self.finger_names[finger.type],
-                        finger.id,
-                        finger.length,
-                        finger.width)
+                    if debug_leap_prints:
+                        print "    %s finger, id: %d, length: %fmm, width: %fmm" % (
+                              self.finger_names[finger.type],
+                              finger.id,
+                              finger.length,
+                              finger.width)
 
                     # Get bones
                     bone1 = [finger.bone(1).direction.x, finger.bone(1).direction.y, finger.bone(1).direction.z]
                     bone2 = [finger.bone(2).direction.x, finger.bone(2).direction.y, finger.bone(2).direction.z]
                     bone3 = [finger.bone(3).direction.x, finger.bone(3).direction.y, finger.bone(3).direction.z]
 
-                    print "Bone1: %s Bone2: %s Bones3: %s" % (bone1, bone2, bone3)
+                    if debug_leap_prints:
+                        print "Bone1: %s Bone2: %s Bones3: %s" % (bone1, bone2, bone3)
 
                     #angle of deviation of each bone from straight
                     deviation1 = math.cos(np.dot(bone1, direction))/(np.linalg.norm(bone1) * np.linalg.norm(direction))
@@ -98,9 +104,9 @@ class SampleListener(Leap.Listener):
                     # The 3 angles between the bones in the direction of normal
                     # The 3 angle beteen the bones and the plane of (normal X prior bone)
 
-                    print "deviation1: %s, deviation2: %s, deviation3: %s, jointangle1: %s, jointangle2: %s" % (
-                        deviation1, deviation2, deviation3, joint_angle1, joint_angle2
-                    )
+                    if debug_leap_prints:
+                        print "deviation1: %s, deviation2: %s, deviation3: %s, jointangle1: %s, jointangle2: %s" % (
+                              deviation1, deviation2, deviation3, joint_angle1, joint_angle2)
                     data.append(deviation1)
                     data.append(deviation2)
                     data.append(deviation3)
