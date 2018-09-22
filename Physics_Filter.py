@@ -40,87 +40,173 @@ import numpy
 class PhysicsFilter:
     
     def getVar(self, dataset):
+        
         return sqrt(numpy.apply_over_axes(numpy.std,dataset))
     
     # NOTE:
-    # sample data to get process variance and sensor variance of position, velocity, and acceleration
-    # keep her hand as still as she can get -sensor variance
-    # get her to spell her name -process variance
+    # keep her hand as still as she can get -measurement variance
+    # get her to spell her name -state variance
     
     def getCovarxva(self, positionData, velocityData, accelerationData):
-        positionCovar = getVar(positionData)
-        velocityCovar = getVar(velocityData)
-        accelerationCovar = getVar(accelerationData)
-        return numpy.diag([positionCovar, velocityCovar, accelerationCovar])
+        
+        positionVar = getVar(positionData)
+        velocityVar = getVar(velocityData)
+        accelerationVar = getVar(accelerationData)
+        
+        return numpy.diag([positionVar, velocityVar, accelerationVar])
     
-    # NOTE:
-    # sample data
-    # create for process and sensor noise covariance matrix
+    # STATE COVARIANCE MATRIX -use the variance while she spells her name
+    # Po = [[ Covar(position, position),     Covar(velocity, position),     Covar(acceleration, position)    ],
+    #       [ Covar(position, velocity),     Covar(velocity, velocity),     Covar(acceleration, velocity)    ],
+    #       [ Covar(position, acceleration), Covar(velocity, acceleration), Covar(acceleration, acceleration)]]
+    # OR
+    # Po = [[ Var(position), 0,             0                 ],
+    #       [ 0,             Var(velocity), 0                 ],
+    #       [ 0,             0,             Var(acceleration) ]]
+    
+    # Translation of  state covariance matrix P:
+    # We assume that the variance of velocity doesn't correlate with variance of position or acceleration and other enumerations.
+    # Position, velocity, and acceleration all have their own variances which we have measured previously.
+    
+    # If we assume there's correlation between the variances:
+    # Po = [[ std(position)*std(position,      std(velocity)*std(position),     std(acceleration)*std(position)    ],
+    #       [ std(position)*std(velocity),     std(velocity)*std(position),     std(acceleration)*std(velocity)    ],
+    #       [ std(position)*std(acceleration), std(velocity)*std(acceleration), std(acceleration)*std(acceleration)]]
+    
+    # MEASUREMENT NOISE MATRIX -use the variance while she keeps her hand still
+    # R = [[ Var(position), 0,             0                 ],
+    #      [ 0,             Var(velocity), 0                 ],
+    #      [ 0,             0,             Var(acceleration) ]]
+    
+    # Translation of measurement noise covariance matrix R:
+    # We assume that the variance in our measurements as the user keeps her hand still is the variance in the sensor reading
+    # We also assume that the variance of one parameter isn't correlated with the variance of another parameter
+    
+    # PROCESS NOISE MATRIX
+    # Q = [[ Var(randNum), 0,            0           ],
+    #      [ 0,            Var(randNum), 0           ],
+    #      [ 0,            0,            Var(randNum)]]
+    
+    # Translation of process noise covariance matrix Q:
+    # We quantify our confidence in our model and also account of white noise.
+    # Currently using variance of random numbers but will tweak depending on the validation of data
     
     def getCovarxv(self, positionData, velocityData):
-        positionCovar = getVar(positionData)
-        velocityCovar = getVar(velocityData)
-        return numpy.diag([positionCovar, velocityCovar])
+        
+        positionVar = getVar(positionData)
+        velocityVar = getVar(velocityData)
+        
+        return numpy.diag([positionVar, velocityVar])
     
-    # NOTE:
-    # sample data
-    # create for process and sensor noise covariance matrix
+    def predictxva(self, priorState, priorStateMatrix, processNoise):
+        
+        priorState = numpy.reshape(priorState, (3, 1)) 
+        stateTransition = numpy.matrix('1, deltaT, 0.25*deltaT^2; 0, 1, 0.5*deltaT; 0, 0, 0.5') 
+        predictedState = stateTransition*priorState
+        
+        predictedStateMatrix = stateTransition*priorStateMatrix*stateTransition.T + processNoise
+        
+        return predictedState, predictedStateMatrix
     
-    def predictxva(self, stateVectors, deltaT): 
-        stateVectors = numpy.reshape(stateVectors, (3, 1)) 
-        stateTransition = numpy.matrix('1, deltaT, deltaT^2; 0, 1, deltaT; 0, 0, 1') 
-        return stateTransition*stateVector
+    # Must order the priorState in position, velocity, acceleration for this model 
+    # priorState = [[position],
+    #               [velocity],
+    #               [acceleration]]
     
-    # NOTE: 
-    # Must order the stateVector in position, velocity, acceleration for this model 
-    # stateVector = [[position],
-    #                [velocity],
-    #                [acceleration]]
-    # stateTransition = [[1, deltaT, deltaT^2],
-    #                    [0,      1,   deltaT],
-    #                    [0,      0,        1]]
+    # stateTransition = [[1, deltaT, 0.25*deltaT^2],
+    #                    [0,      1,   0.5*deltaT ],
+    #                    [0,      0,        0.5   ]]
+    
     # Another translation of the maths above
-    # stateVector         stateTransition
-    # position_k        : position_(k-1) + velocity_(k-1)*deltaT + acceleration_(k-1)*deltaT^2
-    # velocity_k        :                  velocity_(k-1)        + acceleration_(k-1)*deltaT
-    # acceleration_k    :                                          acceleration_(k-1)
+    # priorState          stateTransition
+    # position_k        : position_(k-1) + velocity_(k-1)*deltaT + 0.25*acceleration_(k-1)*deltaT^2
+    # velocity_k        :                  velocity_(k-1)        + 0.5*acceleration_(k-1)*deltaT
+    # acceleration_k    :                                          0.5*acceleration_(k-1)
+    
+    # In this model, we predict that acceleration decays with each predictive iteration.
     
     # TODO: 
     # Make this code tuple friendly
     # We might have to initialize the stateTransition as this:
     # stateTransition = [[(1,1,1), (deltaT,deltaT,deltaT), (deltaT^2,deltaT^2,deltaT^2)],
-    #                    [(0,0,0), (1,1,1), (deltaT,deltaT,deltaT)],
-    #                    [(0,0,0), (0,0,0), (1,1,1)]]
+    #                    [(0,0,0), (1,1,1),                (deltaT,deltaT,deltaT)      ],
+    #                    [(0,0,0), (0,0,0),                (1,1,1)                     ]]
        
-    def predictxv(self, stateVectors, deltaT):
-        stateVectors = numpy.reshape(stateVectors,(2,1))
+    def predictxv(self, priorState, priorStateMatrix):
+        
+        priorState = numpy.reshape(priorState,(2,1))
         stateTransition = numpy.matrix('1, deltaT; 0, 1')
-        return stateTransition*stateVector
+        predictedState = priorState*stateTransition
+        
+        predictedStateMatrix = stateTransition*priorStateMatrix*stateTransition.T + processNoise
+        
+        return predictedState, predictedStateMatrix
 
-    # NOTE: 
     # Must order the stateVector in position and velocity for this model
-    # stateVector = [[position],
-    #                [velocity]]
+    # priorState = [[position],
+    #               [velocity]]
+    
     # stateTransition = [[1, deltaT],
-    #                    [0,      1]]
+    #                    [0, 1     ]]
+    
     # Another translation of the maths above
-    # stateVector         stateTransition
+    # priorState          stateTransition
     # position_k        : position_(k-1) + velocity_(k-1)*deltaT
     # velocity_k        :                  velocity_(k-1)
+    
+    # In this model, we predict that velocity stays constant with each predictive iteration.
     
     # TODO:
     # Make this code tuple friendly
     
-    def updatexva(self, stateVectors, stateCovar, deltaT):
+    def residualxv(self, measuredState, predictedState):
         
+        measuredState = numpy.reshape(measuredState,(2,1))
+        predictedState = numpy.reshape(predictedState,(2,1))
+        
+        return measuredState - predictedState
+    
+    # Must order measuredState and predictedState in position and velocity for this model
+    # measuredState = [[measuredPosition],
+    #                  [measuredVelocity]]
+    
+    # predictedState = [[predictedPosition],
+    #                   [predictedVelocity]]
+        
+    def residualxva(self, measuredState, predictedState):
+        measuredState = numpy.reshape(measuredState,(3,1))
+        predictedState = numpy.reshape(predictedState,(3,1))
+        return measuredState - predictedState
+    
+    # Must order measuredState and priorState in position, velocity, and acceleration for this model
+    # measuredState = [[measuredPosition    ],
+    #                  [measuredVelocity    ],
+    #                  [measuredAcceleration]]
+    
+    # predictedState = [[predictedPosition    ],
+    #                   [predictedVelocity    ],
+    #                   [predictedAcceleration]]
+    
+    def updatexva(self, measuredState, predictedState, priorStateMatrix, measurementNoise):
+        
+        KalmanGain = priorStateMatrix*(priorStateMatrix + measurementNoise)^-1
+        newState = predictedState + KalmanGain(residualxva(measuredState,predictedState))
+        newStateMatrix = (1 - KalmanGain)*priorStateMatrix
+        
+        return newState, newStateMatrix
         
     # TODO:
-    # Figure out how to do this part now
+    # Figure out how to explain this to make sure I understand it correctly
 
-    def setPalmOrigin(self, palm_position, dataset):
-        for data in dataset:
-            dataset = dataset - palm_position
-        return dataset
+    def setPalmOrigin(self, palm_position, positionData, palm_velocity, velocityData):
+        
+        for data in positionData:
+            positionData[data] = data - palm_position
+            
+        for data in velocityData:
+            velocityData[data] = data - palm_velocity
+            
+        return positionData, velocityData
     
     def controlLimit(self, numPoints, threshold):
         
