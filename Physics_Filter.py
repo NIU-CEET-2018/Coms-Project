@@ -44,7 +44,7 @@ class PhysicsFilter:
         self.initialStateMatrix                                          # defined in setupKalmanFilter()
         self.priorStateMatrix                                            # defined in setupKalmanFilter
         self.predictedStateMatrix                                        # defined in predict()
-        self.stateTransitionxv = numpy.matrix('1, self.deltaT; 0, 1')
+        self.stateTransitionxv  = numpy.matrix('1, self.deltaT; 0, 1')
         self.stateTransitionxva = numpy.matrix('1, self.deltaT, 0.25*self.deltaT^2; 0, 1, 0.5*self.deltaT; 0, 0, 0.5') 
         self.priorState                                                  # originally defined in getInitialState()
         self.predictedState                                              # defined in predict()
@@ -57,13 +57,13 @@ class PhysicsFilter:
     # BACKGROUND INFORMATION -Covariance Matrices: processNoise, measurementNoise, priorStateMatrix, predictedStateMatrix
     
     # Derivation:
-    #      [[ Covar(position, position),     Covar(velocity, position),     Covar(acceleration, position)    ],
-    #       [ Covar(position, velocity),     Covar(velocity, velocity),     Covar(acceleration, velocity)    ],
+    #      [[ Covar(position, position    ), Covar(velocity, position    ), Covar(acceleration, position    )],
+    #       [ Covar(position, velocity    ), Covar(velocity, velocity    ), Covar(acceleration, velocity    )],
     #       [ Covar(position, acceleration), Covar(velocity, acceleration), Covar(acceleration, acceleration)]]
     
     # This can be re-written as: 
-    #      [[ std(position)*std(position),     std(velocity)*std(position),     std(acceleration)*std(position)    ],
-    #       [ std(position)*std(velocity),     std(velocity)*std(position),     std(acceleration)*std(velocity)    ],
+    #      [[ std(position)*std(position    ), std(velocity)*std(position    ), std(acceleration)*std(position    )],
+    #       [ std(position)*std(velocity    ), std(velocity)*std(position    ), std(acceleration)*std(velocity    )],
     #       [ std(position)*std(acceleration), std(velocity)*std(acceleration), std(acceleration)*std(acceleration)]]
     
     # However, we assume that the variance of one parameter isn't correlated with the variance of another parameter.
@@ -117,8 +117,8 @@ class PhysicsFilter:
     # stateTransitionxva, stateTransitionxv
     
     # stateTransitionxva = [[1, deltaT, 0.25*deltaT^2],
-    #                       [0,      1,   0.5*deltaT ],
-    #                       [0,      0,        0.5   ]]
+    #                       [0, 1,      0.5*deltaT   ],
+    #                       [0, 0,      0.5          ]]
     
     # Another translation of the maths above
     # priorState          stateTransition
@@ -185,9 +185,9 @@ class PhysicsFilter:
     
     def setupKalmanFilterxv(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
-        self.measurementNoise = self.getCovarxv(staticPositionData, staticVelocityData)
+        self.measurementNoise   = self.getCovarxv(staticPositionData, staticVelocityData)
         self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
-        self.priorStateMatrix = self.initialStateMatrix
+        self.priorStateMatrix   = self.initialStateMatrix
         
         randomPosition = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
         randomVelocity = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
@@ -199,9 +199,9 @@ class PhysicsFilter:
     
     def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
         
-        self.measurementNoise = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
+        self.measurementNoise   = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
-        self.priorStateMatrix = self.initialStateMatrix
+        self.priorStateMatrix   = self.initialStateMatrix
         
         randomPosition     = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
         randomVelocity     = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
@@ -255,7 +255,7 @@ class PhysicsFilter:
         
         self.deltaT = deltaT
         self.predictxvaDEMO(stateTransition)
-        priorState = self.update(measuredState)
+        priorState  = self.update(measuredState)
         
         return priorState
     
@@ -290,7 +290,7 @@ class PhysicsFilter:
         
         self.stateTransition = stateTransition 
         
-        self.predictedState = self.stateTransition*self.priorState
+        self.predictedState  = self.stateTransition*self.priorState
         self.predictedMatrix = self.stateTransition*self.priorStateMatrix*self.stateTransition.T + self.processNoise
         
     # Essentially the same logic as the others, but demo is a different model
@@ -431,3 +431,4 @@ class PhysicsFilter:
         return stateVector
     
     # For data that only contains position and extrapolates velocity
+    
