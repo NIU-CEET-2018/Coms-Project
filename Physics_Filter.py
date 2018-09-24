@@ -203,7 +203,7 @@ class PhysicsFilter:
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix = self.initialStateMatrix
         
-         randomPosition     = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
+        randomPosition     = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
         randomVelocity     = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
         randomAcceleration = numpy.random.randint(min(staticAccelerationData), max(staticAccelerationData), len(staticAccelerationData))
         
