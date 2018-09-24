@@ -186,7 +186,8 @@ class PhysicsFilter:
     def setupKalmanFilterxv(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
         self.measurementNoise = self.getCovarxv(staticPositionData, staticVelocityData)
-        self.priorStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
+        self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
+        self.priorStateMatrix = self.initialStateMatrix
         
         randomPosition = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
         randomVelocity = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
@@ -195,6 +196,20 @@ class PhysicsFilter:
         
     # Feed this function pre-collected data
     # Defines processNoise, measurementNoise, initialStateMatrix, priorStateMatrix
+    
+    def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
+        
+        self.measurementNoise = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
+        self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
+        self.priorStateMatrix = self.initialStateMatrix
+        
+         randomPosition     = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
+        randomVelocity     = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
+        randomAcceleration = numpy.random.randint(min(staticAccelerationData), max(staticAccelerationData), len(staticAccelerationData))
+        
+        self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
+        
+    # Essentially the same logic as the others, but specifically made for the demo
     
     def getInitialState(self, positionData, velocityData, timestamp):
         
@@ -236,6 +251,16 @@ class PhysicsFilter:
     
     # Kalman Filter only does one iteration
     
+    def KalmanFilterxvaDEMO(self, measuredState, deltaT, stateTransition):
+        
+        self.deltaT = deltaT
+        self.predictxvaDEMO(stateTransition)
+        priorState = self.update(measuredState)
+        
+        return priorState
+    
+    # Essentially the same logic as the others, but demo is a different model
+    
     def getDeltaT(self, measuredTime):
         
         self.deltaT    = measuredTime - self.timestamp
@@ -260,6 +285,15 @@ class PhysicsFilter:
         
     # TODO:
     # Make this code tuple friendly
+    
+    def predictxvaDEMO(self, stateTransition):
+        
+        self.stateTransition = stateTransition 
+        
+        self.predictedState = self.stateTransition*self.priorState
+        self.predictedMatrix = self.stateTransition*self.priorStateMatrix*self.stateTransition.T + self.processNoise
+        
+    # Essentially the same logic as the others, but demo is a different model
     
     def update(self, measuredState):
         
