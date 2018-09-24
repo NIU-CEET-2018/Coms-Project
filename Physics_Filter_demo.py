@@ -26,13 +26,13 @@ import random
 # The ASL Kalman Filter is modelled differently than the demo Kalman Filter
 
 # GLOBAL VARIABLES
-initialPosition = (0, 0, 0)
-initialVelocity = (5, 100, 10)
+initialPosition = [0, 0, 0]
+initialVelocity = [5, 100, 10]
 MatrixSize = 100
 whiteNoiseSTDev = 9
 deltaT = 0.5
 
-stateTransition = numpy.matrix('(1, 1, 1), (deltaT, deltaT, deltaT), (0, 0.5*deltaT^2, 0); (0, 0, 0), (1, 1, 1), (0, deltaT, 0); (0, 0, 0), (0, 0, 0), (0, 1, 0)')
+stateTransition = numpy.array(([[1, 1, 1], [deltaT, deltaT, deltaT], [0, 0.5*deltaT^2, 0]], [[0, 0, 0], [1, 1, 1], [0, deltaT, 0]], [[0, 0, 0], [0, 0, 0], [0, 1, 0]]))
 
 # DERIVATION of stateTransition:
 
@@ -224,7 +224,7 @@ def canonSimulator(initialPos, initialVel, deltaT, matrixSize, stateTransition):
     measuredState       = numpy.zeros(matrixSize)
     gravity             = -9.98
     initialAcceleration = (0, gravity, 0)
-    initialState        = (initialPos, initialVel, initialAcceleration)
+    initialState        = [initialPos, initialVel, initialAcceleration]
     measuredState[0]    = initialState
     
     index = 0
