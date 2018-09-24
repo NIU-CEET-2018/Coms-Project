@@ -28,6 +28,7 @@ import math
 # Data needs to be processed a little before using the filter aka organize as a proper state vector and timestamp
 
 #TODO:
+# - [ ] Turn all tuples into mini lists because tuples are immutable
 # - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
 # - [ ] Feed it data and plot to see if it works the way we want it to
 # - [ ] Create code that organizes data into usable forms for the filter
@@ -36,7 +37,7 @@ import math
 #       - EX: KalmanFilter(object1), KalmanFilter(object2), KalmanFilter(object3), etc
 # - [ ] Create a demo for next presentation
 
-class PhysicsFilter:
+class Physics_Filter:
     
     def __init__(self):
         self.processNoise                                                # defined in setupKalmanFilter()
@@ -44,8 +45,8 @@ class PhysicsFilter:
         self.initialStateMatrix                                          # defined in setupKalmanFilter()
         self.priorStateMatrix                                            # defined in setupKalmanFilter
         self.predictedStateMatrix                                        # defined in predict()
-        self.stateTransitionxv  = numpy.matrix('1, self.deltaT; 0, 1')
-        self.stateTransitionxva = numpy.matrix('1, self.deltaT, 0.25*self.deltaT^2; 0, 1, 0.5*self.deltaT; 0, 0, 0.5') 
+        self.stateTransitionxv  = numpy.array(([[1,1,1], [self.deltaT,self.deltaT,self.deltaT]], [[0,0,0], [1,1,1]]))
+        self.stateTransitionxva = numpy.array(([[1,1,1], [self.deltaT,self.deltaT,self.deltaT], [0.25*self.deltaT**2,0.25*self.deltaT**2,0.25*self.deltaT**2]], [[0,0,0], [1,1,1], [0.5*self.deltaT,0.5*self.deltaT,0.5*self.deltaT]], [[0,0,0], [0,0,0], [0.5,0.5,0.5]])) 
         self.priorState                                                  # originally defined in getInitialState()
         self.predictedState                                              # defined in predict()
         self.KalmanGain                                                  # defined in update()
@@ -261,30 +262,15 @@ class PhysicsFilter:
     
     # Essentially the same logic as the others, but demo is a different model
     
-    def getDeltaT(self, measuredTime):
-        
-        self.deltaT    = measuredTime - self.timestamp
-        self.timestamp = measuredTime
-    
     def predictxva(self):
         
         self.predictedState       = self.stateTransitionxva*self.priorState
         self.predictedStateMatrix = self.stateTransitionxva*self.priorStateMatrix*self.stateTransitionxva.T + self.processNoise
-                    
-    # TODO: 
-    # Make this code tuple friendly, but might not be necessary because python magic
-    # We might have to initialize the stateTransition as this:
-    # stateTransition = [[(1,1,1), (deltaT,deltaT,deltaT), (0.25*deltaT^2,0.25*deltaT^2,0.25*deltaT^2)],
-    #                    [(0,0,0), (1,1,1),                (0.5*deltaT,0.5*deltaT,0.5*deltaT)         ],
-    #                    [(0,0,0), (0,0,0),                (0.5,0.5,0.5)                              ]]
        
     def predictxv(self):
         
         self.predictedState       = self.priorState*self.stateTransitionxv
         self.predictedStateMatrix = self.stateTransitionxv*self.priorStateMatrix*self.stateTransitionxv.T + self.processNoise
-        
-    # TODO:
-    # Make this code tuple friendly
     
     def predictxvaDEMO(self, stateTransition):
         
@@ -302,6 +288,24 @@ class PhysicsFilter:
         self.priorStateMatrix = self.predictedStateMatrix - self.KalmanGain*self.predictedStateMatrix
         
         return self.priorState
+
+    def getDeltaTk(self, measuredTime):
+        
+        self.deltaT    = measuredTime - self.timestamp
+        self.timestamp = measuredTime
+        
+    # Gets deltaT for one iteration
+    
+    def getDeltaT(self, timestampData):
+        
+        deltaTData = numpy.zeros(len(timestampData)-1)
+        
+        for data in deltaTData:
+            deltaTData[data] = timestampData[data+1] - timestampData[data]
+            
+        return deltaTData        
+        
+    # Gets a deltaT array
     
     def getVar(self, dataset):
         
@@ -332,6 +336,7 @@ class PhysicsFilter:
         return accelerationData
     
     # Calculates acceleration if we'd like to go that route, but I'm unsure if I modelled it correctly
+    # Calculates an acceleration array
     
     def calcAccelk(self, velocity):
         
@@ -339,20 +344,21 @@ class PhysicsFilter:
         
     # Calculates acceleration for one iteration
     
-    def calcVelocity(self, positionData):
+    def calcVelocity(self, positionData, deltaTData):
         
         velocityData = numpy.zeros(len(positionData)-1)
         
         for data in velocityData:
-            velocityData[data] = positionData[data+1] - positionData[data]
+            velocityData[data] = (positionData[data+1] - positionData[data]) / deltaTData[data]
             
         return velocityData
     
     # Calculates velocity, some of the data might not have this available
+    # Calculates a velocity array
     
-    def calcVelocityk(self, position):
+    def calcVelocityk(self, position, deltaT):
         
-        return position - self.priorState[0]
+        return (position - self.priorState[0]) / deltaT
     
     # Calculates velocity for one iteration
     
@@ -372,15 +378,16 @@ class PhysicsFilter:
     def setPalmOrigin(self, palm_position, positionData, palm_velocity, velocityData):
         
         for data in positionData:
-            positionData[data] = data - palm_position
+            positionData[data] = positionData[data] - palm_position
             
         for data in velocityData:
-            velocityData[data] = data - palm_velocity
+            velocityData[data] = velocityData[data] - palm_velocity
             
-        return positionData, velocityData
+        accelerationData = self.calcAcceleration(velocityData)
+            
+        return positionData, velocityData, accelerationData
     
     # Puts the hand's palm to the origin and removes any possible velocities associated with palm movement
-    # Acceleration doesn't get affected 
     # Probably not important to set the palm to origin with this current logic
     
     def buildStateVectorxv(self, position, velocity):
@@ -404,11 +411,11 @@ class PhysicsFilter:
         
         return stateVector
     
-    def buildStateVectorxa(self, position):
+    def buildStateVectorxa(self, position, deltaT):
         
         stateVector = numpy.zeros(3,1)
         
-        velocity     = self.getVelocityk(position)
+        velocity     = self.getVelocityk(position, deltaT)
         acceleration = self.getAccelk(velocity)
         
         stateVector[0] = position
@@ -419,11 +426,11 @@ class PhysicsFilter:
     
     # For data that only contains position and extrapolates velocity and acceleration
     
-    def buildStateVectorx(self, position):
+    def buildStateVectorx(self, position, deltaT):
         
-        stateVector = numpy.zeros(3,1)
+        stateVector = numpy.zeros(2,1)
         
-        velocity = self.getVelocityk(position)
+        velocity = self.getVelocityk(position, deltaT)
         
         stateVector[0] = position
         stateVector[1] = velocity
