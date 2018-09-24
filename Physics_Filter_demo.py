@@ -25,7 +25,7 @@ stateTransition = numpy.matrix('(1, 1, 1), (deltaT, deltaT, deltaT), (0, 0.5*del
     # position = initialPosition_x + initialVelocity_x*deltaT 
     
     # VERTICAL MOTION: (y)
-    # acceleration = gravity = -9.98 m/s
+    # acceleration = gravity = -9.98 m/s = constant
     # velocity = initialVelocity_y + acceleration*deltaT
     # position = initialPosition_y + initialVelocity_y*deltaT + 0.5*acceleration*deltaT^2
     
@@ -129,7 +129,6 @@ def main():
     T = numpy.arange(0, MatrixSize*deltaT, deltaT)
     
     # plot realData, filteredData, and cleanData
-    
     plt.figure(1)
     plt.subplot(311)
     plt.plot(realPositionx, T)
