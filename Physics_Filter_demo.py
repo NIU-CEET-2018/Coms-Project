@@ -19,6 +19,7 @@ import random
 #       - Create axis titles
 #       - Create legends
 #       - Make it colorful
+# - [ ] Get this to handle 3 dimensions
 
 # NOTE:
 # The success of this relies heavily on how well we model the system and how well we quantify the covariances
@@ -26,13 +27,18 @@ import random
 # The ASL Kalman Filter is modelled differently than the demo Kalman Filter
 
 # GLOBAL VARIABLES
-initialPosition = [0, 0, 0]
-initialVelocity = [5, 100, 10]
+initialPosition = 0
+initialVelocity = 5
 MatrixSize = 100
 whiteNoiseSTDev = 9
 deltaT = 0.5
 
-stateTransition = numpy.array(([[1, 1, 1], [deltaT, deltaT, deltaT], [0, 0.5*deltaT^2, 0]], [[0, 0, 0], [1, 1, 1], [0, deltaT, 0]], [[0, 0, 0], [0, 0, 0], [0, 1, 0]]))
+# Only doing 1 dimension for now, need to figure out how to do this with 3D matrices
+
+stateTransition = numpy.array([1,deltaT,0],[0,1,0],[0,0,0])
+
+
+# stateTransition = numpy.array(([[1, 1, 1], [deltaT, deltaT, deltaT], [0, 0.5*deltaT^2, 0]], [[0, 0, 0], [1, 1, 1], [0, deltaT, 0]], [[0, 0, 0], [0, 0, 0], [0, 1, 0]]))
 
 # DERIVATION of stateTransition:
 
@@ -117,7 +123,26 @@ def main():
     cleanPosition     = dataProcessor(0, cleanData)
     cleanVelocity     = dataProcessor(1, cleanData)
     cleanAcceleration = dataProcessor(2, cleanData)
+
+    T = numpy.arange(0, MatrixSize*deltaT, deltaT)
     
+    # plot realData, filteredData, and cleanData
+    # Position graphs
+    plt.figure(1)
+    plt.subplot(311)
+    plt.plot(realPosition, T)
+    plt.plot(filteredPosition, T)
+    plt.plot(cleanPosition, T)
+    plt.subplot(312)
+    plt.plot(realVector, T)
+    plt.plot(filteredVector, T)
+    plt.plot(cleanVector, T)
+    plt.subplot(313)
+    plt.plot(realAcceleration, T)
+    plt.plot(filteredAcceleration, T)
+    plt.plot(cleanAcceleration, T)
+    
+    '''
     # process the data a bit more 
     realPositionx = dataProcessor(0, realPosition)
     realPositiony = dataProcessor(1, realPosition)
@@ -206,7 +231,7 @@ def main():
     plt.plot(filteredAccelerationz, T)
     
     # A lot of repetitive stuff here, but too lazy to make look clean. Don't judge. I brute forced all the way. 
-    
+    '''
 def dataProcessor(spot, array):
     
     data = [x[spot] for x in array]
