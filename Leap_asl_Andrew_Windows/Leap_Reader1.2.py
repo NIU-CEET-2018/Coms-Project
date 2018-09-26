@@ -154,6 +154,7 @@ def record_single_char():
     with open(csv_path, 'a+') as csv_file:
         global CSV_WRITER
         CSV_WRITER = csv.writer(csv_file, delimiter=',', lineterminator='\n')
+        add_header()
         raw_input("Press enter to record.")
 
         # Have the sample listener receive events from the controller
