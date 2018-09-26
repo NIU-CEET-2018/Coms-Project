@@ -28,9 +28,17 @@ import math
 # Data needs to be processed a little before using the filter aka organize as a proper state vector and timestamp
 
 #TODO:
-# - [ ] Turn all tuples into mini lists because tuples are immutable
+# - [ ] Figure out how to process a matrix within a matrix the way I want to
+#       - EX: in  = [[[px,py,pz], [vx,vy,vz], [ax,ay,az]],
+#                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]],
+#                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]]]
+#
+#             out = [[px,py,pz],
+#                    [vx,vy,vz],
+#                    [ax,ay,az]]
+#       - Lots of unit testing each step to verify that the more complicated matrices maths the way I want it to
 # - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
-# - [ ] Feed it data and plot to see if it works the way we want it to
+# - [ ] Feed it data and plot to see if it works the way we want it to <--- Works for 1D but not 3D
 # - [ ] Create code that organizes data into usable forms for the filter
 # - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
 #       - Might be able to filter each object? However, that might be slower
@@ -45,8 +53,8 @@ class Physics_Filter:
         self.initialStateMatrix                                          # defined in setupKalmanFilter()
         self.priorStateMatrix                                            # defined in setupKalmanFilter
         self.predictedStateMatrix                                        # defined in predict()
-        self.stateTransitionxv  = numpy.array(([[1,1,1], [self.deltaT,self.deltaT,self.deltaT]], [[0,0,0], [1,1,1]]))
-        self.stateTransitionxva = numpy.array(([[1,1,1], [self.deltaT,self.deltaT,self.deltaT], [0.25*self.deltaT**2,0.25*self.deltaT**2,0.25*self.deltaT**2]], [[0,0,0], [1,1,1], [0.5*self.deltaT,0.5*self.deltaT,0.5*self.deltaT]], [[0,0,0], [0,0,0], [0.5,0.5,0.5]])) 
+        self.stateTransitionxv  = numpy.array(([1, self.deltaT], [0, 1]))
+        self.stateTransitionxva = numpy.array(([1, self.deltaT, 0.25*self.deltaT**2], [0, 1, 0.5*self.deltaT], [0, 0, 0.5])) 
         self.priorState                                                  # originally defined in getInitialState()
         self.predictedState                                              # defined in predict()
         self.KalmanGain                                                  # defined in update()
@@ -264,28 +272,28 @@ class Physics_Filter:
     
     def predictxva(self):
         
-        self.predictedState       = self.stateTransitionxva*self.priorState
-        self.predictedStateMatrix = self.stateTransitionxva*self.priorStateMatrix*self.stateTransitionxva.T + self.processNoise
+        self.predictedState       = self.stateTransitionxva@self.priorState
+        self.predictedStateMatrix = self.stateTransitionxva@self.priorStateMatrix@self.stateTransitionxva.T + self.processNoise
        
     def predictxv(self):
         
-        self.predictedState       = self.priorState*self.stateTransitionxv
-        self.predictedStateMatrix = self.stateTransitionxv*self.priorStateMatrix*self.stateTransitionxv.T + self.processNoise
+        self.predictedState       = self.priorState@self.stateTransitionxv
+        self.predictedStateMatrix = self.stateTransitionxv@self.priorStateMatrix@self.stateTransitionxv.T + self.processNoise
     
     def predictxvaDEMO(self, stateTransition):
         
         self.stateTransition = stateTransition 
         
-        self.predictedState  = self.stateTransition*self.priorState
-        self.predictedMatrix = self.stateTransition*self.priorStateMatrix*self.stateTransition.T + self.processNoise
+        self.predictedState  = self.stateTransition@self.priorState
+        self.predictedMatrix = self.stateTransition@self.priorStateMatrix@self.stateTransition.T + self.processNoise
         
     # Essentially the same logic as the others, but demo is a different model
     
     def update(self, measuredState):
         
-        self.KalmanGain       = self.predictedStateMatrix*(self.predictedStateMatrix + self.measurementNoise).I
-        self.priorState       = self.predictedState + self.KalmanGain*(measuredState - self.predictedState)
-        self.priorStateMatrix = self.predictedStateMatrix - self.KalmanGain*self.predictedStateMatrix
+        self.KalmanGain       = self.predictedStateMatrix@(self.predictedStateMatrix + self.measurementNoise).I
+        self.priorState       = self.predictedState + self.KalmanGain@(measuredState - self.predictedState)
+        self.priorStateMatrix = self.predictedStateMatrix - self.KalmanGain@self.predictedStateMatrix
         
         return self.priorState
 
@@ -309,7 +317,7 @@ class Physics_Filter:
     
     def getVar(self, dataset):
         
-        return math.sqrt(numpy.apply_over_axes(numpy.std,dataset))
+        return math.sqrt(numpy.std(dataset))
     
     def getCovarxva(self, positionData, velocityData, accelerationData):
         
