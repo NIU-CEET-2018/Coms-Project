@@ -240,7 +240,7 @@ def dataProcessor(spot, array):
                     
 def whiteNoiseGenerator(std, matrixSize):
     
-    return numpy.random.normal( (0,0,0), std, size=matrixSize )
+    return numpy.random.normal( 0, std, size=matrixSize )
     
     # The mean of white noise is theoretically 0
     
@@ -248,7 +248,7 @@ def canonSimulator(initialPos, initialVel, deltaT, matrixSize, stateTransition):
     
     measuredState       = numpy.zeros(matrixSize)
     gravity             = -9.98
-    initialAcceleration = (0, gravity, 0)
+    initialAcceleration = 0
     initialState        = [initialPos, initialVel, initialAcceleration]
     measuredState[0]    = initialState
     

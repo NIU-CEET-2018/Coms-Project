@@ -3,7 +3,6 @@
 """Filters out and cleans up suspicious/noisy data from a stream."""
 
 import numpy
-import math
 
 # HOW TO USE IN main():
 
@@ -29,6 +28,7 @@ import math
 
 #TODO:
 # - [ ] Figure out how to process a matrix within a matrix the way I want to
+#
 #       - EX: in  = [[[px,py,pz], [vx,vy,vz], [ax,ay,az]],
 #                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]],
 #                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]]]
@@ -36,30 +36,33 @@ import math
 #             out = [[px,py,pz],
 #                    [vx,vy,vz],
 #                    [ax,ay,az]]
+#
 #       - Lots of unit testing each step to verify that the more complicated matrices maths the way I want it to
 # - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
-# - [ ] Feed it data and plot to see if it works the way we want it to <--- Works for 1D but not 3D
-# - [ ] Create code that organizes data into usable forms for the filter
+# - [/] Feed it data and plot to see if it works the way we want it to <--- Works for 1D but not 3D
+#       - That's a half check mark
+# - [/] Create code that organizes data into usable forms for the filter
+#       - That is also another half check mark
 # - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
 #       - Might be able to filter each object? However, that might be slower
 #       - EX: KalmanFilter(object1), KalmanFilter(object2), KalmanFilter(object3), etc
-# - [ ] Create a demo for next presentation
+# - [x] Create a demo for next presentation
 
 class Physics_Filter:
     
     def __init__(self):
-        self.processNoise                                                # defined in setupKalmanFilter()
-        self.measurementNoise                                            # defined in setupKalmanFilter()
-        self.initialStateMatrix                                          # defined in setupKalmanFilter()
-        self.priorStateMatrix                                            # defined in setupKalmanFilter
-        self.predictedStateMatrix                                        # defined in predict()
+        self.processNoise = 0                                                # defined in setupKalmanFilter()
+        self.measurementNoise = 0                                            # defined in setupKalmanFilter()
+        self.initialStateMatrix = 0                                          # defined in setupKalmanFilter()
+        self.priorStateMatrix = 0                                            # defined in setupKalmanFilter
+        self.predictedStateMatrix = 0                                        # defined in predict()
         self.stateTransitionxv  = numpy.array(([1, self.deltaT], [0, 1]))
         self.stateTransitionxva = numpy.array(([1, self.deltaT, 0.25*self.deltaT**2], [0, 1, 0.5*self.deltaT], [0, 0, 0.5])) 
-        self.priorState                                                  # originally defined in getInitialState()
-        self.predictedState                                              # defined in predict()
-        self.KalmanGain                                                  # defined in update()
-        self.timestamp                                                   # originally defined in getInitialState()
-        self.deltaT                                                      # defined in KalmanFilter()
+        self.priorState = 0                                                  # originally defined in getInitialState()
+        self.predictedState = 0                                              # defined in predict()
+        self.KalmanGain = 0                                                  # defined in update()
+        self.timestamp = 0                                                   # originally defined in getInitialState()
+        self.deltaT = 0                                                      # defined in KalmanFilter()
         
     # DESCRIPTION OF VARIABLES:
     
@@ -183,9 +186,26 @@ class Physics_Filter:
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition     = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
-        randomVelocity     = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
-        randomAcceleration = numpy.random.randint(min(staticAccelerationData), max(staticAccelerationData), len(staticAccelerationData))
+        randomPosition = numpy.zeros((len(staticPositionData),3))
+        
+        index = 0
+        while index < len(staticPositionData):
+            randomPosition[index] = numpy.random.randint(min(staticPositionData[index]), max(staticPositionData[index]), len(staticPositionData))
+            index = index+1
+            
+        randomVelocity = numpy.zeros((len(staticVelocityData),3))
+        
+        index = 0
+        while index < len(staticVelocityData):
+            randomVelocity[index] = numpy.random.randint(min(staticVelocityData[index]), max(staticVelocityData[index]), len(staticVelocityData))
+            index = index+1
+            
+        randomAcceleration = numpy.zeros((len(staticAccelerationData)))
+        
+        index = 0
+        while index < len(staticAccelerationData):
+            randomAcceleration[index] = numpy.random.randint(min(staticAccelerationData[index]), max(staticAccelerationData[index]), len(staticAccelerationData))
+            index = index+1
         
         self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
         
@@ -198,13 +218,24 @@ class Physics_Filter:
         self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
-        randomVelocity = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
+        randomPosition = numpy.zeros((len(staticPositionData),3))
+        
+        index = 0
+        while index < len(staticPositionData):
+            randomPosition[index] = numpy.random.randint(min(staticPositionData[index]), max(staticPositionData[index]), size=(len(staticPositionData)))
+            index = index+1
+            
+        randomVelocity = numpy.zeros((len(staticVelocityData),3))
+        
+        index = 0
+        while index < len(staticVelocityData):
+            randomVelocity[index] = numpy.random.randint(min(staticVelocityData[index]), max(staticVelocityData[index]), size=(len(staticVelocityData)))
         
         self.processNoise = self.getCovarxv(randomPosition, randomVelocity)
         
     # Feed this function pre-collected data
     # Defines processNoise, measurementNoise, initialStateMatrix, priorStateMatrix
+    # Might make process noise a function of measurement noise
     
     def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
         
@@ -212,23 +243,41 @@ class Physics_Filter:
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition     = numpy.random.randint(min(staticPositionData), max(staticPositionData), len(staticPositionData))
-        randomVelocity     = numpy.random.randint(min(staticVelocityData), max(staticVelocityData), len(staticVelocityData))
-        randomAcceleration = numpy.random.randint(min(staticAccelerationData), max(staticAccelerationData), len(staticAccelerationData))
+        randomPosition = numpy.zeros((len(staticPositionData),3))
+        
+        index = 0
+        while index < len(staticPositionData):
+            randomPosition[index] = numpy.random.randint(min(staticPositionData[index]), max(staticPositionData[index]), len(staticPositionData))
+            index = index+1
+            
+        randomVelocity = numpy.zeros((len(staticVelocityData),3))
+        
+        index = 0
+        while index < len(staticVelocityData):
+            randomVelocity[index] = numpy.random.randint(min(staticVelocityData[index]), max(staticVelocityData[index]), len(staticVelocityData))
+            index = index+1
+            
+        randomAcceleration = numpy.zeros((len(staticAccelerationData)))
+        
+        index = 0
+        while index < len(staticAccelerationData):
+            randomAcceleration[index] = numpy.random.randint(min(staticAccelerationData[index]), max(staticAccelerationData[index]), len(staticAccelerationData))
+            index = index+1
         
         self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
         
     # Essentially the same logic as the others, but specifically made for the demo
+    # Might make process noise a function of measurement noise
     
     def getInitialState(self, positionData, velocityData, timestamp):
         
         accelerationData = self.calcAcceleration(velocityData)
         
-        stateVectors = numpy.zeros(3,1)
+        stateVectors = numpy.zeros(3,1,3)
         
-        stateVectors[0] = numpy.average(positionData)
-        stateVectors[1] = numpy.average(velocityData)
-        stateVectors[2] = numpy.average(accelerationData)
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        stateVectors[2] = numpy.average(accelerationData, axis=0)
         
         self.timestamp = timestamp
         
@@ -272,28 +321,27 @@ class Physics_Filter:
     
     def predictxva(self):
         
-        self.predictedState       = self.stateTransitionxva@self.priorState
-        self.predictedStateMatrix = self.stateTransitionxva@self.priorStateMatrix@self.stateTransitionxva.T + self.processNoise
+        self.predictedState       = numpy.dot(self.stateTransitionxva,self.priorState)
+        self.predictedStateMatrix = numpy.dot(self.stateTransitionxva,numpy.dot(self.priorStateMatrix,self.stateTransitionxva.T)) + self.processNoise
        
     def predictxv(self):
         
-        self.predictedState       = self.priorState@self.stateTransitionxv
-        self.predictedStateMatrix = self.stateTransitionxv@self.priorStateMatrix@self.stateTransitionxv.T + self.processNoise
+        self.predictedState       = numpy.dot(self.priorState,self.stateTransitionxv)
+        self.predictedStateMatrix = numpy.dot(self.stateTransitionxv,numpy.dot(self.priorStateMatrix,self.stateTransitionxv.T)) + self.processNoise
     
     def predictxvaDEMO(self, stateTransition):
         
         self.stateTransition = stateTransition 
-        
-        self.predictedState  = self.stateTransition@self.priorState
-        self.predictedMatrix = self.stateTransition@self.priorStateMatrix@self.stateTransition.T + self.processNoise
+        self.predictedState  = numpy.dot(self.stateTransition,self.priorState)
+        self.predictedMatrix = numpy.dot(self.stateTransition,numpy.dot(self.priorStateMatrix,self.stateTransition.T)) + self.processNoise
         
     # Essentially the same logic as the others, but demo is a different model
     
     def update(self, measuredState):
         
-        self.KalmanGain       = self.predictedStateMatrix@(self.predictedStateMatrix + self.measurementNoise).I
-        self.priorState       = self.predictedState + self.KalmanGain@(measuredState - self.predictedState)
-        self.priorStateMatrix = self.predictedStateMatrix - self.KalmanGain@self.predictedStateMatrix
+        self.KalmanGain       = numpy.dot(self.predictedStateMatrix,numpy.linalg.inv(self.predictedStateMatrix + self.measurementNoise))
+        self.priorState       = self.predictedState + numpy.dot(self.KalmanGain,numpy.subtract(measuredState,self.predictedState))
+        self.priorStateMatrix = numpy.subtract(self.predictedStateMatrix,numpy.dot(self.KalmanGain,self.predictedStateMatrix))
         
         return self.priorState
 
@@ -305,19 +353,14 @@ class Physics_Filter:
     # Gets deltaT for one iteration
     
     def getDeltaT(self, timestampData):
-        
-        deltaTData = numpy.zeros(len(timestampData)-1)
-        
-        for data in deltaTData:
-            deltaTData[data] = timestampData[data+1] - timestampData[data]
-            
-        return deltaTData        
+                                                                       
+        return [j-i for i,j in zip(timestampData[:-1],timestampData[1:])]       
         
     # Gets a deltaT array
     
     def getVar(self, dataset):
         
-        return math.sqrt(numpy.std(dataset))
+        return numpy.var(dataset,axis=0)
     
     def getCovarxva(self, positionData, velocityData, accelerationData):
         
@@ -325,23 +368,29 @@ class Physics_Filter:
         velocityVar     = self.getVar(velocityData)
         accelerationVar = self.getVar(accelerationData)
         
-        return numpy.diag([positionVar, velocityVar, accelerationVar])
+        covarMatrix = numpy.zeros((3,3,3))
+        
+        covarMatrix[0,0,:] = positionVar
+        covarMatrix[1,1,:] = velocityVar
+        covarMatrix[2,2,:] = accelerationVar
+        
+        return covarMatrix
     
     def getCovarxv(self, positionData, velocityData):
         
         positionVar = self.getVar(positionData)
         velocityVar = self.getVar(velocityData)
         
-        return numpy.diag([positionVar, velocityVar])
+        covarMatrix = numpy.zeros((2,2,3))
+        
+        covarMatrix[0,0,:] = positionVar
+        covarMatrix[1,1,:] = velocityVar
+        
+        return covarMatrix
     
     def calcAcceleration(self, velocityData):
-        
-        accelerationData = numpy.zeros(len(velocityData)-1)
-        
-        for data in accelerationData:
-            accelerationData[data] = velocityData[data+1] - velocityData[data]
             
-        return accelerationData
+        return [j-i for i,j in zip(velocityData[:-1],velocityData[1:])] 
     
     # Calculates acceleration if we'd like to go that route, but I'm unsure if I modelled it correctly
     # Calculates an acceleration array
@@ -354,10 +403,11 @@ class Physics_Filter:
     
     def calcVelocity(self, positionData, deltaTData):
         
-        velocityData = numpy.zeros(len(positionData)-1)
+        velocityData = numpy.zeros((len(positionData)-1))
         
-        for data in velocityData:
+        while data < len(positionData)-1:
             velocityData[data] = (positionData[data+1] - positionData[data]) / deltaTData[data]
+            data = data+1
             
         return velocityData
     
@@ -400,7 +450,7 @@ class Physics_Filter:
     
     def buildStateVectorxv(self, position, velocity):
         
-        stateVector = numpy.zeros(2,1)
+        stateVector = numpy.zeros((2,1,3))
         
         stateVector[0] = position
         stateVector[1] = velocity
@@ -409,7 +459,7 @@ class Physics_Filter:
             
     def buildStateVectorxva(self, position, velocity):
         
-        stateVector = numpy.zeros(3,1)
+        stateVector = numpy.zeros((3,1,3))
         
         acceleration = self.getAccelk(velocity)
         
@@ -421,7 +471,7 @@ class Physics_Filter:
     
     def buildStateVectorxa(self, position, deltaT):
         
-        stateVector = numpy.zeros(3,1)
+        stateVector = numpy.zeros((3,1,3))
         
         velocity     = self.getVelocityk(position, deltaT)
         acceleration = self.getAccelk(velocity)
@@ -436,7 +486,7 @@ class Physics_Filter:
     
     def buildStateVectorx(self, position, deltaT):
         
-        stateVector = numpy.zeros(2,1)
+        stateVector = numpy.zeros((2,1,3))
         
         velocity = self.getVelocityk(position, deltaT)
         
