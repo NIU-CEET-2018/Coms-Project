@@ -13,13 +13,14 @@ import random
 # Kalman Filter is modelled a little differently for this, but general logic remains the same
 
 # TODO:
-# - [ ] Run the code and verify
-# - [ ] Make the plots look prettier
+# - [x] Run the code and verify
+# - [x] Make the plots look prettier
 #       - Create titles
 #       - Create axis titles
 #       - Create legends
 #       - Make it colorful
 # - [ ] Get this to handle 3 dimensions
+# -     - Can only handle 1 dimension currently
 
 # NOTE:
 # The success of this relies heavily on how well we model the system and how well we quantify the covariances
@@ -34,9 +35,9 @@ whiteNoiseSTDev = 9
 deltaT = 0.5
 
 # Only doing 1 dimension for now, need to figure out how to do this with 3D matrices
+# Only x direction
 
-stateTransition = numpy.array([1,deltaT,0],[0,1,0],[0,0,0])
-
+stateTransition = numpy.array(([1,deltaT,0],[0,1,0],[0,0,0]))
 
 # stateTransition = numpy.array(([[1, 1, 1], [deltaT, deltaT, deltaT], [0, 0.5*deltaT^2, 0]], [[0, 0, 0], [1, 1, 1], [0, deltaT, 0]], [[0, 0, 0], [0, 0, 0], [0, 1, 0]]))
 
@@ -71,8 +72,6 @@ stateTransition = numpy.array([1,deltaT,0],[0,1,0],[0,0,0])
 # velocity     : (0, 0, 0), (1,      1,      1     ), (0, deltaT,       0)
 # acceleration : (0, 0, 0), (0,      0,      0     ), (0, 1,            0)
     
-# The tuples are organized in (x, y, z) components
-
 # Another translation of the maths above
 # constant velocity in the x direction with zero acceleration
 # constant velocity in the z direction with zero acceleration
@@ -87,8 +86,8 @@ def main():
     whiteNoise = whiteNoiseGenerator(whiteNoiseSTDev, MatrixSize)
     
     # "stateMatrix" - dummy sample data of object doing the thing it does
-    randPosition = (random.randint(0,10), random.randint(0,10), random.randint(0,10))
-    randVelocity = (random.randint(0,100), random.randin(50,100), random.randint(0,100))
+    randPosition = random.randint(0,10)
+    randVelocity = random.randint(0,10)
     randProcess  = dataGenerator(randPosition, randVelocity, deltaT, MatrixSize, whiteNoiseSTDev, stateTransition)
     
     # process the data a bit
@@ -100,11 +99,16 @@ def main():
     movingVelocityData     = dataProcessor(1, randProcess)
     movingAccelerationData = dataProcessor(2, randProcess)
     
-    # obtain measurementNoise, stateMatrix, processNoise
-    Physics_Filter.setupKalmanFilterDEMO(staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData)
+    DEMO = Physics_Filter()
     
-    for state in measuredStates:
-        filteredData = Physics_Filter.KalmanFilterxvaDEMO(measuredStates, deltaT)
+    # obtain measurementNoise, stateMatrix, processNoise
+    DEMO.setupKalmanFilterDEMO(staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData)
+    
+    state = 0
+    
+    while(state<MatrixSize):
+        filteredData[state] = Physics_Filter.KalmanFilterxvaDEMO(measuredStates[state], deltaT, stateTransition)
+        state = state+1
         
     cleanData = canonSimulator(initialPosition, initialVelocity, deltaT, MatrixSize, stateTransition)
     
@@ -127,20 +131,36 @@ def main():
     T = numpy.arange(0, MatrixSize*deltaT, deltaT)
     
     # plot realData, filteredData, and cleanData
-    # Position graphs
     plt.figure(1)
-    plt.subplot(311)
-    plt.plot(realPosition, T)
-    plt.plot(filteredPosition, T)
-    plt.plot(cleanPosition, T)
-    plt.subplot(312)
-    plt.plot(realVector, T)
-    plt.plot(filteredVector, T)
-    plt.plot(cleanVector, T)
-    plt.subplot(313)
-    plt.plot(realAcceleration, T)
-    plt.plot(filteredAcceleration, T)
-    plt.plot(cleanAcceleration, T)
+    plt.plot(T, realPosition, 'g', label="realPosition")
+    plt.plot(T, filteredPosition,'r', label="filteredPosition")
+    # plt.plot(T, cleanPosition,'b', label="cleanPosition")
+    plt.legend(loc='best')
+    plt.title("position vs time")
+    plt.ylabel("position")
+    plt.xlabel("time")
+    
+    plt.figure(2)
+    plt.plot(T, realVelocity, 'g', label="realVelocity")
+    plt.plot(T, filteredVelocity,'r', label="filteredVelocity")
+    # plt.plot(T, cleanVelocity, 'b', label="cleanVelocity")
+    plt.legend(loc='best')
+    plt.title("velocity vs time")
+    plt.ylabel("velocity")
+    plt.xlabel("time")
+    
+    plt.figure(3)
+    plt.plot(T, realAcceleration, 'g', label="realAcceleration")
+    plt.plot(T, filteredAcceleration, 'r',label="filteredAcceleration")
+    # plt.plot(T, cleanAcceleration, 'b', label="cleanAcceleration")
+    plt.legend(loc='best')
+    plt.title("acceleration vs time")
+    plt.ylabel("acceleration")
+    plt.xlabel("time")
+    
+    plt.figure(1).show()
+    plt.figure(2).show()
+    plt.figure(3).show()
     
     '''
     # process the data a bit more 
@@ -240,23 +260,22 @@ def dataProcessor(spot, array):
                     
 def whiteNoiseGenerator(std, matrixSize):
     
-    return numpy.random.normal( 0, std, size=matrixSize )
+    return numpy.random.normal( 0, std, size=(matrixSize,3) )
     
     # The mean of white noise is theoretically 0
     
 def canonSimulator(initialPos, initialVel, deltaT, matrixSize, stateTransition):
     
-    measuredState       = numpy.zeros(matrixSize)
-    gravity             = -9.98
+    measuredState       = numpy.zeros((matrixSize,3))
     initialAcceleration = 0
     initialState        = [initialPos, initialVel, initialAcceleration]
     measuredState[0]    = initialState
     
     index = 0
     
-    while index < matrixSize: 
-        measuredState[index+1] = stateTransition*measuredState[index] 
-        index += index
+    while (index < (matrixSize-1)): 
+        measuredState[index+1] = numpy.dot(stateTransition,measuredState[index])
+        index = index+1
         
     return measuredState
 
