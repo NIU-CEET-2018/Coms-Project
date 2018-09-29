@@ -188,15 +188,15 @@ class Physics_Filter(object):
         self.palmPosition = 0 # tuple, (xyz)
         self.palmDirection = 0 # tuple, vector (xyz)
         self.pointerFinger = 0 # tuple, vector (xyz)
-        self.middleFinger = 0 # tuple, vector 
-        self.ringFinger = 0
-        self.pinkyFinger = 0
-        self.thumbFinger = 0
-        self.pointerFingerVelocity = 0
-        self.middleFingerVelocity = 0
-        self.ringFingerVelocity = 0
-        self.pinkyFingerVelocity = 0
-        self.thumbFingerVelocity = 0
+        self.middleFingerDirection = 0 # tuple, vector 
+        self.ringFingerDirection = 0
+        self.pinkyFingerDirection = 0
+        self.thumbFingerDirection = 0
+        self.pointerFingerDeltaDirection = 0
+        self.middleFingerDeltaDirection = 0
+        self.ringFingerDeltaDirection = 0
+        self.pinkyFingerDeltaDirection = 0
+        self.thumbFingerDeltaDirection = 0
         
     # subclass of Physics_Filter to make putting variables into canonical form much easier
     
@@ -209,11 +209,8 @@ class Physics_Filter(object):
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = self.randomSpreadGenerator(staticPositionData)
-        randomVelocity = self.randomSpreadGenerator(staticVelocityData)
-        randomAcceleration = self.randomSpreadGenerator(staticAccelerationData)
-        
-        self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
+        confidenceFactor = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
         
     # Feed this function pre-collected data
     # Defines processNoise, measurementNoise, initialStateMatrix, priorStateMatrix
@@ -224,14 +221,11 @@ class Physics_Filter(object):
         self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = self.randomSpreadGenerator(staticPositionData)
-        randomVelocity = self.randomSpreadGenerator(staticVelocityData)
-        
-        self.processNoise = self.getCovarxv(randomPosition, randomVelocity)
+        confidenceFactor = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
         
     # Feed this function pre-collected data
     # Defines processNoise, measurementNoise, initialStateMatrix, priorStateMatrix
-    # Might make process noise a function of measurement noise
     
     def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
         
@@ -239,26 +233,10 @@ class Physics_Filter(object):
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = self.randomSpreadGenerator(staticPositionData)
-        randomVelocity = self.randomSpreadGenerator(staticVelocityData)
-        randomAcceleration = self.randomSpreadGenerator(staticAccelerationData)
-        
-        self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
+        confidenceFactor = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
         
     # Essentially the same logic as the others, but specifically made for the demo
-    # Might make process noise a function of measurement noise
-    
-    def randomSpreadGenerator(self, dataset):
-        
-        randomDataset = numpy.zeros((len(dataset)))
-        
-        index = 0
-        
-        while index < len(dataset):
-            randomDataset[index] = numpy.random.randint(min(dataset[index]), max(dataset[index]), len(dataset))
-            index = index+1
-            
-        return dataset
     
     def getInitialState(self, positionData, velocityData, timestamp):
         
@@ -292,7 +270,7 @@ class Physics_Filter(object):
     def KalmanFilterxv(self, measuredState, measuredTime):
         
         self.getDeltaT(measuredTime)
-        self.predictxva()
+        self.predictxv()
         
         priorState = self.update(measuredState)
         
@@ -312,29 +290,109 @@ class Physics_Filter(object):
     
     def predictxva(self):
         
-        self.predictedState       = numpy.dot(self.stateTransitionxva,self.priorState)
-        self.predictedStateMatrix = numpy.dot(self.stateTransitionxva,numpy.dot(self.priorStateMatrix,self.stateTransitionxva.T)) + self.processNoise
+        self.predictedState = numpy.zeros((3,3))
+        
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransitionxva[:,:,index],self.priorState[:,index])
+            index = index+1
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxva[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+            
+        index = 0
+        self.predictedStateMatrix = self.priorStateMatrix
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxva[:,:,index].T) + self.processNoise[:,index]
+            index = index+1
        
     def predictxv(self):
         
-        self.predictedState       = numpy.dot(self.priorState,self.stateTransitionxv)
-        self.predictedStateMatrix = numpy.dot(self.stateTransitionxv,numpy.dot(self.priorStateMatrix,self.stateTransitionxv.T)) + self.processNoise
+        self.predictedState = numpy.zeros((3,3))
+        
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransitionxv[:,:,index],self.priorState[:,index])
+            index = index+1
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxv[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+            
+        index = 0
+        self.predictedStateMatrix = self.priorStateMatrix
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxv[:,:,index].T) + self.processNoise[:,index]
+            index = index+1
     
     def predictxvaDEMO(self, stateTransition):
         
         self.stateTransition = stateTransition 
-        self.predictedState  = numpy.dot(self.stateTransition,self.priorState)
-        self.predictedStateMatrix = numpy.dot(self.stateTransition,numpy.dot(self.priorStateMatrix,self.stateTransition.T)) + self.processNoise
+
+        self.predictedState = numpy.zeros((3,3))
         
-    # Essentially the same logic as the others, but demo is a different model
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransition[:,:,index],self.priorState[:,index])
+            index = index+1
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransition[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+            
+        index = 0
+        self.predictedStateMatrix = self.priorStateMatrix
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransition[:,:,index].T) + self.processNoise[:,index]
+            index = index+1  
     
     def update(self, measuredState):
         
-        self.KalmanGain       = numpy.dot(self.predictedStateMatrix,numpy.linalg.inv(self.predictedStateMatrix + self.measurementNoise))
-        self.priorState       = self.predictedState + numpy.dot(self.KalmanGain,numpy.subtract(measuredState,self.predictedState))
-        self.priorStateMatrix = numpy.subtract(self.predictedStateMatrix,numpy.dot(self.KalmanGain,self.predictedStateMatrix))
+        scalingFactor = self.predictedStateMatrix+self.measurementNoise
         
-        return self.priorState
+        inv = scalingFactor
+
+        index = 0
+
+        while index < 3:
+            inv[:,:,index] = numpy.linalg.inv(scalingFactor[:,:,index])
+            index = index+1
+        
+        index = 0
+        
+        self.KalmanGain = self.predictedStateMatrix
+        
+        while index < 3:
+            self.KalmanGain[:,:,index] = numpy.dot(self.predictedStateMatrix[:,:,index], inv[:,:,index])
+            index = index+1
+            
+        index = 0
+        
+        while index < 3:
+            self.priorState[:,index] = self.predictedState[:,index] + numpy.dot(self.KalmanGain[:,:,index],numpy.subtract(measuredState[:,index],self.predictedState[:,index]))
+            index = index+1
+        
+        intermediateArray = self.KalmanGain
+        
+        index = 0
+        
+        while index < 3:
+            intermediateArray[:,:,index] = numpy.dot(self.KalmanGain[:,:,index], self.predictedStateMatrix[:,:,index])
+            index = index+1
+            
+        self.priorStateMatrix = numpy.subtract(self.predictedStateMatrix,intermediateArray)
+        
+        return self.priorState 
 
     def getDeltaTk(self, measuredTime):
         
