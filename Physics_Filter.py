@@ -46,9 +46,16 @@ import numpy
 # - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
 #       - Might be able to filter each object? However, that might be slower
 #       - EX: KalmanFilter(object1), KalmanFilter(object2), KalmanFilter(object3), etc
+#       - Murray wants it to be this canonical form
+#
+#         [ palm position, 
+#           palm angle (normal vec), 
+#           each finger's angle of bend and angle of deviation from straight (wiggle waggle angle), 
+#           the d/dt of each of those ] 
+#
 # - [x] Create a demo for next presentation
 
-class Physics_Filter:
+class Physics_Filter(object):
     
     def __init__(self):
         self.processNoise = 0                                                # defined in setupKalmanFilter()
@@ -177,6 +184,22 @@ class Physics_Filter:
     
     # Keeps track of time
     
+    class FilteredHand(object):
+        self.palmPosition = 0 # tuple, (xyz)
+        self.palmDirection = 0 # tuple, vector (xyz)
+        self.pointerFinger = 0 # tuple, vector (xyz)
+        self.middleFinger = 0 # tuple, vector 
+        self.ringFinger = 0
+        self.pinkyFinger = 0
+        self.thumbFinger = 0
+        self.pointerFingerVelocity = 0
+        self.middleFingerVelocity = 0
+        self.ringFingerVelocity = 0
+        self.pinkyFingerVelocity = 0
+        self.thumbFingerVelocity = 0
+        
+    # subclass of Physics_Filter to make putting variables into canonical form much easier
+    
     def setupKalmanFilterxva(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
         staticAccelerationData = self.calcAcceleration(staticVelocityData)
@@ -186,26 +209,9 @@ class Physics_Filter:
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = numpy.zeros((len(staticPositionData),3))
-        
-        index = 0
-        while index < len(staticPositionData):
-            randomPosition[index] = numpy.random.randint(min(staticPositionData[index]), max(staticPositionData[index]), len(staticPositionData))
-            index = index+1
-            
-        randomVelocity = numpy.zeros((len(staticVelocityData),3))
-        
-        index = 0
-        while index < len(staticVelocityData):
-            randomVelocity[index] = numpy.random.randint(min(staticVelocityData[index]), max(staticVelocityData[index]), len(staticVelocityData))
-            index = index+1
-            
-        randomAcceleration = numpy.zeros((len(staticAccelerationData)))
-        
-        index = 0
-        while index < len(staticAccelerationData):
-            randomAcceleration[index] = numpy.random.randint(min(staticAccelerationData[index]), max(staticAccelerationData[index]), len(staticAccelerationData))
-            index = index+1
+        randomPosition = self.randomSpreadGenerator(staticPositionData)
+        randomVelocity = self.randomSpreadGenerator(staticVelocityData)
+        randomAcceleration = self.randomSpreadGenerator(staticAccelerationData)
         
         self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
         
@@ -218,18 +224,8 @@ class Physics_Filter:
         self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = numpy.zeros((len(staticPositionData),3))
-        
-        index = 0
-        while index < len(staticPositionData):
-            randomPosition[index] = numpy.random.randint(min(staticPositionData[index]), max(staticPositionData[index]), size=(len(staticPositionData)))
-            index = index+1
-            
-        randomVelocity = numpy.zeros((len(staticVelocityData),3))
-        
-        index = 0
-        while index < len(staticVelocityData):
-            randomVelocity[index] = numpy.random.randint(min(staticVelocityData[index]), max(staticVelocityData[index]), size=(len(staticVelocityData)))
+        randomPosition = self.randomSpreadGenerator(staticPositionData)
+        randomVelocity = self.randomSpreadGenerator(staticVelocityData)
         
         self.processNoise = self.getCovarxv(randomPosition, randomVelocity)
         
@@ -243,37 +239,32 @@ class Physics_Filter:
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        randomPosition = numpy.zeros((len(staticPositionData),3))
-        
-        index = 0
-        while index < len(staticPositionData):
-            randomPosition[index] = numpy.random.randint(min(staticPositionData[index]), max(staticPositionData[index]), len(staticPositionData))
-            index = index+1
-            
-        randomVelocity = numpy.zeros((len(staticVelocityData),3))
-        
-        index = 0
-        while index < len(staticVelocityData):
-            randomVelocity[index] = numpy.random.randint(min(staticVelocityData[index]), max(staticVelocityData[index]), len(staticVelocityData))
-            index = index+1
-            
-        randomAcceleration = numpy.zeros((len(staticAccelerationData)))
-        
-        index = 0
-        while index < len(staticAccelerationData):
-            randomAcceleration[index] = numpy.random.randint(min(staticAccelerationData[index]), max(staticAccelerationData[index]), len(staticAccelerationData))
-            index = index+1
+        randomPosition = self.randomSpreadGenerator(staticPositionData)
+        randomVelocity = self.randomSpreadGenerator(staticVelocityData)
+        randomAcceleration = self.randomSpreadGenerator(staticAccelerationData)
         
         self.processNoise = self.getCovarxva(randomPosition, randomVelocity, randomAcceleration)
         
     # Essentially the same logic as the others, but specifically made for the demo
     # Might make process noise a function of measurement noise
     
+    def randomSpreadGenerator(self, dataset):
+        
+        randomDataset = numpy.zeros((len(dataset)))
+        
+        index = 0
+        
+        while index < len(dataset):
+            randomDataset[index] = numpy.random.randint(min(dataset[index]), max(dataset[index]), len(dataset))
+            index = index+1
+            
+        return dataset
+    
     def getInitialState(self, positionData, velocityData, timestamp):
         
         accelerationData = self.calcAcceleration(velocityData)
         
-        stateVectors = numpy.zeros(3,1,3)
+        stateVectors = numpy.zeros((3,1,3))
         
         stateVectors[0] = numpy.average(positionData, axis=0)
         stateVectors[1] = numpy.average(velocityData, axis=0)
@@ -333,7 +324,7 @@ class Physics_Filter:
         
         self.stateTransition = stateTransition 
         self.predictedState  = numpy.dot(self.stateTransition,self.priorState)
-        self.predictedMatrix = numpy.dot(self.stateTransition,numpy.dot(self.priorStateMatrix,self.stateTransition.T)) + self.processNoise
+        self.predictedStateMatrix = numpy.dot(self.stateTransition,numpy.dot(self.priorStateMatrix,self.stateTransition.T)) + self.processNoise
         
     # Essentially the same logic as the others, but demo is a different model
     
@@ -354,7 +345,7 @@ class Physics_Filter:
     
     def getDeltaT(self, timestampData):
                                                                        
-        return [j-i for i,j in zip(timestampData[:-1],timestampData[1:])]       
+        return numpy.diff(timestampData)      
         
     # Gets a deltaT array
     
@@ -364,33 +355,26 @@ class Physics_Filter:
     
     def getCovarxva(self, positionData, velocityData, accelerationData):
         
-        positionVar     = self.getVar(positionData)
-        velocityVar     = self.getVar(velocityData)
-        accelerationVar = self.getVar(accelerationData)
-        
         covarMatrix = numpy.zeros((3,3,3))
         
-        covarMatrix[0,0,:] = positionVar
-        covarMatrix[1,1,:] = velocityVar
-        covarMatrix[2,2,:] = accelerationVar
+        covarMatrix[0,0,:] = self.getVar(positionData)
+        covarMatrix[1,1,:] = self.getVar(velocityData)
+        covarMatrix[2,2,:] = self.getVar(accelerationData)
         
         return covarMatrix
     
     def getCovarxv(self, positionData, velocityData):
         
-        positionVar = self.getVar(positionData)
-        velocityVar = self.getVar(velocityData)
-        
         covarMatrix = numpy.zeros((2,2,3))
         
-        covarMatrix[0,0,:] = positionVar
-        covarMatrix[1,1,:] = velocityVar
+        covarMatrix[0,0,:] = self.getVar(positionData)
+        covarMatrix[1,1,:] = self.getVar(velocityData)
         
         return covarMatrix
     
     def calcAcceleration(self, velocityData):
             
-        return [j-i for i,j in zip(velocityData[:-1],velocityData[1:])] 
+        return numpy.diff(velocityData, axis=0) 
     
     # Calculates acceleration if we'd like to go that route, but I'm unsure if I modelled it correctly
     # Calculates an acceleration array
@@ -403,13 +387,7 @@ class Physics_Filter:
     
     def calcVelocity(self, positionData, deltaTData):
         
-        velocityData = numpy.zeros((len(positionData)-1))
-        
-        while data < len(positionData)-1:
-            velocityData[data] = (positionData[data+1] - positionData[data]) / deltaTData[data]
-            data = data+1
-            
-        return velocityData
+        return numpy.diff(positionData, axis=0) / deltaTData
     
     # Calculates velocity, some of the data might not have this available
     # Calculates a velocity array
@@ -433,21 +411,6 @@ class Physics_Filter:
     # Makes sure that the covariance matrix doesn't diverge
     # Might not be needed, depends on how well the system is modelled
     
-    def setPalmOrigin(self, palm_position, positionData, palm_velocity, velocityData):
-        
-        for data in positionData:
-            positionData[data] = positionData[data] - palm_position
-            
-        for data in velocityData:
-            velocityData[data] = velocityData[data] - palm_velocity
-            
-        accelerationData = self.calcAcceleration(velocityData)
-            
-        return positionData, velocityData, accelerationData
-    
-    # Puts the hand's palm to the origin and removes any possible velocities associated with palm movement
-    # Probably not important to set the palm to origin with this current logic
-    
     def buildStateVectorxv(self, position, velocity):
         
         stateVector = numpy.zeros((2,1,3))
@@ -460,25 +423,20 @@ class Physics_Filter:
     def buildStateVectorxva(self, position, velocity):
         
         stateVector = numpy.zeros((3,1,3))
-        
-        acceleration = self.getAccelk(velocity)
-        
+
         stateVector[0] = position
         stateVector[1] = velocity
-        stateVector[2] = acceleration
+        stateVector[2] = self.getAccelk(velocity)
         
         return stateVector
     
     def buildStateVectorxa(self, position, deltaT):
         
         stateVector = numpy.zeros((3,1,3))
-        
-        velocity     = self.getVelocityk(position, deltaT)
-        acceleration = self.getAccelk(velocity)
-        
+
         stateVector[0] = position
-        stateVector[1] = velocity
-        stateVector[2] = acceleration
+        stateVector[1] = self.getVelocityk(position, deltaT)
+        stateVector[2] = self.getAccelk(velocity)
         
         return stateVector
     
@@ -497,3 +455,11 @@ class Physics_Filter:
     
     # For data that only contains position and extrapolates velocity
     
+    def dataProcessor(self, spot, array):
+        
+        data = [x[spot] for x in array]
+        
+        return data
+    
+    # Separates the state vectors into their respective position, velocity, and acceleration
+    # OR separates the (x,y,z) components 
