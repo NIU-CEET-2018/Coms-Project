@@ -11,17 +11,13 @@ from PyQt5.QtWidgets import (QMainWindow, QLabel, QGridLayout, QWidget,
                             QMessageBox, QLineEdit)
 from PyQt5.QtGui import *
 from PyQt5.QtCore import QSize, Qt, QTimer, QThread
-from Leap_Reader1.2.py import 
+from Leap_Reader import *
 import time
 
 class proctor(QWidget):
 
     def __init__(self):
         QWidget.__init__(self)
-        letter = 0
-        timerTime = QTimer(self)
-        timerTime.timeout.connect(self.updateLetter)
-        timerTime.start(1000)
     
         self.initUI()
         
