@@ -81,6 +81,7 @@ def save_frame_canonical(frame):
             # The angle between the bones in the direction of normal
             # The angle between the bones and the plane of (normal & prior bone)
 
+        data.append(frame.timestamp)
         CSV_WRITER.writerow(data)
 
 class LeapSerrializingListner(Leap.Listener):
@@ -141,6 +142,7 @@ def add_header():
             header.append(flang+" Deviation "+str(n))
         for n in [1, 2]:
             header.append(flang+" Joint Angle "+str(n))
+    header.append('Time Stamp')
     CSV_WRITER.writerow(header)
 
 def record_single_char():
