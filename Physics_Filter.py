@@ -20,14 +20,14 @@ import numpy
 # while hand is valid {
 # Poll for another frame and process data
 # Physics.KalmanFilter(measuredState, measuredTime) }
-# Maybe resetStateMatrix() if we observe dispersion or whatever?
+# Maybe resetStateMatrix() if we observe dispersion or whatever? Or you know, create a better state transition model
 
 # NOTE: 
 # Sprinkle some sort of external logic to handle NaN aka must have to get initial state after every NaN
 # Data needs to be processed a little before using the filter aka organize as a proper state vector and timestamp
 
 #TODO:
-# - [ ] Figure out how to process a matrix within a matrix the way I want to
+# - [x] Figure out how to process a matrix within a matrix the way I want to
 #
 #       - EX: in  = [[[px,py,pz], [vx,vy,vz], [ax,ay,az]],
 #                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]],
@@ -39,10 +39,9 @@ import numpy
 #
 #       - Lots of unit testing each step to verify that the more complicated matrices maths the way I want it to
 # - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
-# - [/] Feed it data and plot to see if it works the way we want it to <--- Works for 1D but not 3D
-#       - That's a half check mark
+# - [x] Feed it data and plot to see if it works the way we want it to 
 # - [/] Create code that organizes data into usable forms for the filter
-#       - That is also another half check mark
+#       - That is also another half check mark as I'm not exactly sure how the incoming data is setup in detail
 # - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
 #       - Might be able to filter each object? However, that might be slower
 #       - EX: KalmanFilter(object1), KalmanFilter(object2), KalmanFilter(object3), etc
@@ -54,22 +53,53 @@ import numpy
 #           the d/dt of each of those ] 
 #
 # - [x] Create a demo for next presentation
+# - [ ] Learn more about class and subclass structures
+#       - Specialized filters for the palm normal vector and the others as they may be modelled differently
+#       - Each datapoint gets their own processNoise, measurementNoise, and other Kalman variables without overwriting others
+
+# NOTE to SELF: How to model each hand part
+
+# PALM POSITION
+# - From data, extrapolate change in position / velocity
+# - State Vectors will be position and velocity
+# - Use stateTransitionxv as model
+# stateTransitionxv = [[1, deltaT],
+#                      [0, 1     ]]
+
+# PALM NORMAL VECTOR
+# - What assumptions can be made about the behavior of palm normal vector?
+#   - State Vectors will most likely be NORMAL VECTOR and change in NORMAL VECTOR
+#   - Dampen the change in NORMAL VECTOR as hand will generally be facing the leap sensor while signing
+#     (There are only a handful of letters that it would impact a little)
+#     - As long as the state transition model is semi close, it should filter ok
+# - Use modified stateTransionxv as model with a decaying change in NORMAL VECTOR
+# - stateTransitionxv = [[1, 0.5*deltaT],
+#                        [0, 0.5       ]]
+
+# FINGERS
+# - What assumptions can be made about the behavior of the fingers?
+#   - State Vectors will be bend angle and change in bend angle
+#   - Assume that the d/dt remains the same and angle will change accordingly
+#   - Use stateTransitionxv as model
+# stateTransitionxv = [[1, deltaT],
+#                      [0, 1     ]]
 
 class Physics_Filter(object):
-    
+        
     def __init__(self):
-        self.processNoise = 0                                                # defined in setupKalmanFilter()
-        self.measurementNoise = 0                                            # defined in setupKalmanFilter()
-        self.initialStateMatrix = 0                                          # defined in setupKalmanFilter()
-        self.priorStateMatrix = 0                                            # defined in setupKalmanFilter
+        self.processNoise         = 0                                        # defined in setupKalmanFilter()
+        self.measurementNoise     = 0                                        # defined in setupKalmanFilter()
+        self.initialStateMatrix   = 0                                        # defined in setupKalmanFilter()
+        self.priorStateMatrix     = 0                                        # defined in setupKalmanFilter
         self.predictedStateMatrix = 0                                        # defined in predict()
-        self.stateTransitionxv  = numpy.array(([1, self.deltaT], [0, 1]))
-        self.stateTransitionxva = numpy.array(([1, self.deltaT, 0.25*self.deltaT**2], [0, 1, 0.5*self.deltaT], [0, 0, 0.5])) 
-        self.priorState = 0                                                  # originally defined in getInitialState()
-        self.predictedState = 0                                              # defined in predict()
-        self.KalmanGain = 0                                                  # defined in update()
-        self.timestamp = 0                                                   # originally defined in getInitialState()
-        self.deltaT = 0                                                      # defined in KalmanFilter()
+        self.deltaT               = 0                                        # defined in KalmanFilter()        
+        self.stateTransitionxv    = numpy.array(([1, self.deltaT], [0, 1]))
+        self.stateTransitionxva   = numpy.array(([1, self.deltaT, 0.25*self.deltaT**2], [0, 1, 0.5*self.deltaT], [0, 0, 0.5]))
+        self.priorState           = 0                                        # originally defined in getInitialState()
+        self.predictedState       = 0                                        # defined in predict()
+        self.KalmanGain           = 0                                        # defined in update()
+        self.timestamp            = 0                                        # originally defined in getInitialState()
+        self.canonicalForm        = 0
         
     # DESCRIPTION OF VARIABLES:
     
@@ -179,41 +209,69 @@ class Physics_Filter(object):
     # If we have full confidence in our measurement, then the new state will be the measuredState
     # If we're unsure about our measurement, then the new state will be somewhere between measuredState and predictedState
     
+    # canonicalForm
+    # Organized list of the variables of interest
+    #         [ palm position, 
+    #           palm angle (normal vec), 
+    #           each finger's angle of bend and angle of deviation from straight (wiggle waggle angle), 
+    #           the d/dt of each of those ] 
+    
     # OTHERS
     # timestamp, deltaT
     
     # Keeps track of time
     
     class FilteredHand(object):
-        self.palmPosition = 0 # tuple, (xyz)
-        self.palmDirection = 0 # tuple, vector (xyz)
-        self.pointerFinger = 0 # tuple, vector (xyz)
-        self.middleFingerDirection = 0 # tuple, vector 
-        self.ringFingerDirection = 0
-        self.pinkyFingerDirection = 0
-        self.thumbFingerDirection = 0
-        self.pointerFingerDeltaDirection = 0
-        self.middleFingerDeltaDirection = 0
-        self.ringFingerDeltaDirection = 0
-        self.pinkyFingerDeltaDirection = 0
-        self.thumbFingerDeltaDirection = 0
         
-    # subclass of Physics_Filter to make putting variables into canonical form much easier
+        def __init__(self):
+            self.palmPosition                = [0,0,0]
+            self.palmDirection               = [0,0,0]
+            self.pointerFingerDirection      = [0,0,0] 
+            self.middleFingerDirection       = [0,0,0]
+            self.ringFingerDirection         = [0,0,0]
+            self.pinkyFingerDirection        = [0,0,0]
+            self.thumbFingerDirection        = [0,0,0]
+            self.pointerFingerDeltaDirection = [0,0,0]
+            self.middleFingerDeltaDirection  = [0,0,0]
+            self.ringFingerDeltaDirection    = [0,0,0]
+            self.pinkyFingerDeltaDirection   = [0,0,0]
+            self.thumbFingerDeltaDirection   = [0,0,0]
+        
+    # subclass of Physics_Filter to make putting variables into canonical form easier
+    
+    #################################################################################
+    #                           super rough draft                                   #
+    #################################################################################
+    
+    def setupKF(self, canonicalData):
+        
+        # process canonicalData
+        # setupKalmanFilter for each datapoint
+        # hopefully they don't overwrite each other
+        
+    def KalmanFilter(self, canonicalForm, measuredTime):
+        
+        # process canonicalForm
+        # predict each datapoint
+        # update each datapoint
+        # hopefully they don't overwrite each other
+        # canonicalize processed data
+        
+        return filteredCanonicalForm 
     
     def setupKalmanFilterxva(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
-        staticAccelerationData = self.calcAcceleration(staticVelocityData)
-        movingAccelerationData = self.calcAcceleration(movingVelocityData)
+        staticAccelerationData  = self.calcAcceleration(staticVelocityData)
+        movingAccelerationData  = self.calcAcceleration(movingVelocityData)
         
         self.measurementNoise   = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        confidenceFactor = 0.5
+        confidenceFactor  = 0.5
         self.processNoise = confidenceFactor*self.measurementNoise
         
-    # Feed this function pre-collected data
-    # Defines processNoise, measurementNoise, initialStateMatrix, priorStateMatrix
+    # When position and velocity data is available and acceleration is extrapolated
     
     def setupKalmanFilterxv(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
@@ -221,11 +279,42 @@ class Physics_Filter(object):
         self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        confidenceFactor = 0.5
+        confidenceFactor  = 0.5
         self.processNoise = confidenceFactor*self.measurementNoise
         
-    # Feed this function pre-collected data
-    # Defines processNoise, measurementNoise, initialStateMatrix, priorStateMatrix
+    # When position and velocity data is available
+    
+    def setupKalmanFilterxa(self, staticPositionData, movingPositionData, timestampData):
+        
+        deltaTData             = self.getDeltaT(timestampData)
+        staticVelocityData     = self.calcVelocity(staticPositionData,deltaTData)
+        movingVelocityData     = self.calcVelocity(movingvelocityData,deltaTData)
+        staticAccelerationData = self.calcAcceleration(staticVelocityData)
+        movingAccelerationData = self.calcAcceleration(movingAccelerationData)
+        
+        self.measurementNoise   = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
+        self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
+        
+    # When only position and timestamp data is available, extrapolate velocity and acceleration
+    
+    def setupKalmanFilterx(self, staticPositionData, movingPositionData, timestampData):
+        
+        deltaTData         = self.getDeltaT(timestampData)
+        staticVelocityData = self.calcVelocity(staticPositionData,deltaTData)
+        movingVelocityData = self.calcVelocity(movingvelocityData,deltaTData)
+
+        self.measurementNoise   = self.getCovarxv(staticPositionData, staticVelocityData)
+        self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise    
+        
+    # When only position and timestamp data is available, extrapolate velocity
     
     def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
         
@@ -233,12 +322,12 @@ class Physics_Filter(object):
         self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
         self.priorStateMatrix   = self.initialStateMatrix
         
-        confidenceFactor = 0.5
+        confidenceFactor  = 0.5
         self.processNoise = confidenceFactor*self.measurementNoise
         
     # Essentially the same logic as the others, but specifically made for the demo
     
-    def getInitialState(self, positionData, velocityData, timestamp):
+    def getInitialStatexva(self, positionData, velocityData, timestamp):
         
         accelerationData = self.calcAcceleration(velocityData)
         
@@ -255,10 +344,57 @@ class Physics_Filter(object):
     # Filter needs to get a decent initial state value in order to be accurate
     # Therefore, Leap will need to poll for a few frames and estimate the state
     # Defines initial priorState
+    # When position and velocity data is available, extrapolate acceleration
+    
+    def getInitialStatexv(self, positionData, velocityData, timestamp):
+        
+        stateVectors = numpy.zeros((2,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
+        
+    # When position and velocity data is available
+    
+    def getInitialStatexa(self, positionData, timestamp):
+        
+        deltaTData       = self.getDeltaT(timestamp)
+        velocityData     = self.calcVelocity(positionData,deltaTData)
+        accelerationData = self.calcAcceleration(velocityData,deltaTData)
+        
+        stateVectors = numpy.zeros((3,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        stateVectors[2] = numpy.average(accelerationData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
+        
+    # When only position and timestamp data is available, extrapolate velocity and acceleration
+    
+    def getInitialStatex(self, positionData, timestamp):
+        
+        deltaTData   = self.getDeltaT(timestamp)
+        velocityData = self.calcVelocity(positionData,deltaTData)
+        
+        stateVectors = numpy.zeros((2,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
     
     def KalmanFilterxva(self, measuredState, measuredTime):
         
-        self.getDeltaT(measuredTime)
+        self.timestamp = measuredTime
+        self.deltaT    = self.getDeltaTk(measuredTime)
         self.predictxva()
         
         priorState = self.update(measuredState)
@@ -269,7 +405,8 @@ class Physics_Filter(object):
     
     def KalmanFilterxv(self, measuredState, measuredTime):
         
-        self.getDeltaT(measuredTime)
+        self.timestamp = measuredTime
+        self.deltaT    = self.getDeltaTk(measuredTime)
         self.predictxv()
         
         priorState = self.update(measuredState)
@@ -303,9 +440,10 @@ class Physics_Filter(object):
         while index < 3:
             intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxva[:,:,index], self.priorStateMatrix[:, index])
             index = index+1
-            
-        index = 0
+
         self.predictedStateMatrix = self.priorStateMatrix
+ 
+        index = 0
         while index < 3:
             self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxva[:,:,index].T) + self.processNoise[:,index]
             index = index+1
@@ -325,9 +463,10 @@ class Physics_Filter(object):
         while index < 3:
             intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxv[:,:,index], self.priorStateMatrix[:, index])
             index = index+1
+
+        self.predictedStateMatrix = self.priorStateMatrix
             
         index = 0
-        self.predictedStateMatrix = self.priorStateMatrix
         while index < 3:
             self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxv[:,:,index].T) + self.processNoise[:,index]
             index = index+1
@@ -342,6 +481,8 @@ class Physics_Filter(object):
         while index < 3:
             self.predictedState[:,index] = numpy.dot(self.stateTransition[:,:,index],self.priorState[:,index])
             index = index+1
+            
+        # predictedState = stateTransition dot priorState
         
         intermediateMatrix = self.priorStateMatrix
         
@@ -351,10 +492,13 @@ class Physics_Filter(object):
             index = index+1
             
         index = 0
+        
         self.predictedStateMatrix = self.priorStateMatrix
         while index < 3:
             self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransition[:,:,index].T) + self.processNoise[:,index]
             index = index+1  
+            
+        # predictedStateMatrix = stateTransition dot priorStateMatrix dot stateTransition Transposed + processNoise
     
     def update(self, measuredState):
         
@@ -378,9 +522,13 @@ class Physics_Filter(object):
             
         index = 0
         
+        # KalmanGain = predictedStateMatrix dot inverse of (predictedStateMatrix + measurementNoise)
+        
         while index < 3:
             self.priorState[:,index] = self.predictedState[:,index] + numpy.dot(self.KalmanGain[:,:,index],numpy.subtract(measuredState[:,index],self.predictedState[:,index]))
             index = index+1
+            
+        # priorState = predictedState + KalmanGain dot (measuredState - predictedState)
         
         intermediateArray = self.KalmanGain
         
@@ -391,6 +539,8 @@ class Physics_Filter(object):
             index = index+1
             
         self.priorStateMatrix = numpy.subtract(self.predictedStateMatrix,intermediateArray)
+        
+        # priorStateMatrix = predictedStateMatrix - (KalmanGain dot predictedStateMatrix)
         
         return self.priorState 
 
@@ -488,6 +638,8 @@ class Physics_Filter(object):
         
         return stateVector
     
+    # For data that has position and velocity and extrapolates acceleration
+    
     def buildStateVectorxa(self, position, deltaT):
         
         stateVector = numpy.zeros((3,1,3))
@@ -515,9 +667,44 @@ class Physics_Filter(object):
     
     def dataProcessor(self, spot, array):
         
-        data = [x[spot] for x in array]
-        
-        return data
-    
+        return [x[spot] for x in array]
+            
     # Separates the state vectors into their respective position, velocity, and acceleration
     # OR separates the (x,y,z) components 
+    
+    def deTuplizer(self, list_of_tups):
+        
+        return [list(tup) for tup in list_of_tups]
+    
+    # turns a list of tuples into a list of lists
+    
+    def deTuplizerk(self, tup):
+        
+        return list(tup)
+    
+    # turns a tup into a list
+    
+    def canonicalize(self, self.FilteredHand):
+        
+        numData = 12
+        
+        canonicalForm = numpy.zeros((numData, 3))
+        
+        canonicalForm[0] = self.FilteredHand.palmPosition
+        canonicalForm[1] = self.FilteredHand.palmDirection
+        canonicalForm[2] = self.FilteredHand.pointerFingerDirection
+        canonicalForm[3] = self.FilteredHand.middleFingerDirection
+        canonicalForm[4] = self.FilteredHand.ringFingerDirection
+        canonicalForm[5] = self.FilteredHand.pinkyFingerDirection
+        canonicalForm[6] = self.FilteredHand.thumbFingerDirection
+        canonicalForm[7] = self.FilteredHand.pointerFingerDeltaDirection
+        canonicalForm[8] = self.FilteredHand.middleFingerDeltaDirection
+        canonicalForm[9] = self.FilteredHand.ringFingerDeltaDirection
+        canonicalForm[10] = self.FilteredHand.pinkyFingerDeltaDirection
+        canonicalForm[11] = self.FilteredHand.thumbFingerDeltaDirection
+        
+        return canonicalForm
+    
+    # returns all the hand variables in canonical form.
+    # is this how I call a subclass within a class? I might need to organize it differently.
+    
