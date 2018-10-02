@@ -27,19 +27,9 @@ import numpy
 # Data needs to be processed a little before using the filter aka organize as a proper state vector and timestamp
 
 #TODO:
-# - [x] Figure out how to process a matrix within a matrix the way I want to
-#
-#       - EX: in  = [[[px,py,pz], [vx,vy,vz], [ax,ay,az]],
-#                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]],
-#                    [[px,py,pz], [vx,vy,vz], [ax,ay,az]]]
-#
-#             out = [[px,py,pz],
-#                    [vx,vy,vz],
-#                    [ax,ay,az]]
-#
-#       - Lots of unit testing each step to verify that the more complicated matrices maths the way I want it to
 # - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
-# - [x] Feed it data and plot to see if it works the way we want it to 
+# - [/] Feed it data and plot to see if it works the way we want it to
+#       - Use Andrew's hand data by this weekend
 # - [/] Create code that organizes data into usable forms for the filter
 #       - That is also another half check mark as I'm not exactly sure how the incoming data is setup in detail
 # - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
@@ -52,14 +42,13 @@ import numpy
 #           each finger's angle of bend and angle of deviation from straight (wiggle waggle angle), 
 #           the d/dt of each of those ] 
 #
-# - [x] Create a demo for next presentation
 # - [ ] Learn more about class and subclass structures
 #       - Specialized filters for the palm normal vector and the others as they may be modelled differently
 #       - Each datapoint gets their own processNoise, measurementNoise, and other Kalman variables without overwriting others
 
 # NOTE to SELF: How to model each hand part
 
-# PALM POSITION
+# PALM POSITION and VELOCITY
 # - From data, extrapolate change in position / velocity
 # - State Vectors will be position and velocity
 # - Use stateTransitionxv as model
@@ -83,6 +72,28 @@ import numpy
 #   - Use stateTransitionxv as model
 # stateTransitionxv = [[1, deltaT],
 #                      [0, 1     ]]
+
+# LIST OF DATA (AND ORDER) FROM ANDREW'S HAND:
+# Palm Normal x, Palm Normal y, Palm Normal z                    <- Palm Normal Vector (extrapolate change in Normal Vector)
+# Palm Direction x, Palm Direction y, Palm Direction z           <- ?
+# Palm Center x, Palm Center y, Palm Center z                    <- Palm Position, pair together with velocity in filter
+# Palm Velocity x, Palm Velocity y, Palm Velocity z              <- Palm Velocity, pair together with position in filter
+# Thumb Deviation 1, Thumb Deviation 2, Thumb Deviation 3
+# Thumb Joint Angle 1, Thumb Joint Angle 2                       <- Joint angles, extrapolate change in angle
+# Index Deviation 1, Index Deviation 2, Index Deviation 3
+# Index Joint Angle 1, Index Joint Angle 2                       <- Joint angles, extrapolate change in angle
+# Middle Deviation 1, Middle Deviation 2, Middle Deviation 3
+# Middle Joint Angle 1, Middle Joint Angle 2                     <- Joint angles, extrapolate change in angle
+# Ring Deviation 1, Ring Deviation 2, Ring Deviation 3
+# Ring Joint Angle 1, Ring Joint Angle 2                         <- Joint angles, extrapolate change in angle
+# Pinky Deviation 1, Pinky Deviation 2, Pinky Deviation 3
+# Pinky Joint Angle 1, Pinky Joint Angle 2                       <- Joint angles, extrapolate change in angle
+# Time Stamp                                                     <- Extrapolate DeltaT
+
+# NOTE:
+# Palm stuff uses 3D components, and the joint angles uses only 1D components
+# Different filter configurations are needed to ensure that the math is preserved
+
 
 class Physics_Filter(object):
         
@@ -259,6 +270,10 @@ class Physics_Filter(object):
         
         return filteredCanonicalForm 
     
+    #################################################################################
+    #                             end rough draft                                   #
+    #################################################################################
+    
     def setupKalmanFilterxva(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
         staticAccelerationData  = self.calcAcceleration(staticVelocityData)
@@ -272,6 +287,7 @@ class Physics_Filter(object):
         self.processNoise = confidenceFactor*self.measurementNoise
         
     # When position and velocity data is available and acceleration is extrapolated
+    # Use for palm position and palm velocity, extrapolate acceleration to get better results
     
     def setupKalmanFilterxv(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
         
@@ -315,6 +331,7 @@ class Physics_Filter(object):
         self.processNoise = confidenceFactor*self.measurementNoise    
         
     # When only position and timestamp data is available, extrapolate velocity
+    # Use for finger joints
     
     def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
         
@@ -390,6 +407,10 @@ class Physics_Filter(object):
         self.timestamp = timestamp
         
         self.priorState = stateVectors
+        
+    # TODO:
+    # - [ ] Create stateVectors that are only 1D
+    #       - I should have an old commit that has that information stored somewhere
     
     def KalmanFilterxva(self, measuredState, measuredTime):
         
@@ -402,6 +423,7 @@ class Physics_Filter(object):
         return priorState
     
     # Kalman Filter only does one iteration
+    # Use for palm position and velocity
     
     def KalmanFilterxv(self, measuredState, measuredTime):
         
@@ -414,6 +436,7 @@ class Physics_Filter(object):
         return priorState
     
     # Kalman Filter only does one iteration
+    # Use for palm normal vector
     
     def KalmanFilterxvaDEMO(self, measuredState, deltaT, stateTransition):
         
@@ -542,7 +565,10 @@ class Physics_Filter(object):
         
         # priorStateMatrix = predictedStateMatrix - (KalmanGain dot predictedStateMatrix)
         
-        return self.priorState 
+        return self.priorState
+    
+    # TODO:
+    # - [ ] Change to be more polymorphic
 
     def getDeltaTk(self, measuredTime):
         
