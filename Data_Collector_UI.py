@@ -69,14 +69,15 @@ class Collector(QMainWindow):
 
     #Action taken on changed text
     def onChanged(self, text):
-        
-        QLineEdit.clear(self.qle)
-        
+               
         self.w = proctor()
         self.w.show()
         
         read_char(text)
-        self.close()
+        self.w.close()
+        
+        QLineEdit.clear(self.qle)
+
 
     #closeEvent
     def closeEvent(self, event):
