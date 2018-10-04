@@ -32,6 +32,9 @@ class proctor(QWidget):
         
         self.resize(400, 300)        
         self.setWindowTitle('Make the gesture for ' + str(text))
+        
+        proctorLabel = QLabel("Make the letter " + str(text), self)
+        
         self.show()
         
 
