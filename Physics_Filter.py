@@ -2,311 +2,808 @@
 
 """Filters out and cleans up suspicious/noisy data from a stream."""
 
-import time
-import Leap
-import itertools
 import numpy
 
+# HOW TO USE IN main():
+
+# DURING SETUP
+# Prompt user to keep hand still, hovering over the Leap
+# Poll for a bunch of frames and save as staticData
+# Prompt user to finger spell over the leap
+# Poll for a bunch of frames and save as movingData
+# Process data a little for next function
+# PhysicsFilter.setupKalmanFilter(staticPositionData, staticVelocityData, movingPositionData, movingVelocityData)
+
+# DURING MAIN LOOP
+# Poll for a bunch of frames, separate data into velocities and positions arrays, get time
+# get initial state -averagePosition, averageVelocity, averageAcceleration, averageTime
+# while hand is valid {
+# Poll for another frame and process data
+# Physics.KalmanFilter(measuredState, measuredTime) }
+# Maybe resetStateMatrix() if we observe dispersion or whatever? Or you know, create a better state transition model
+
+# NOTE: 
+# Sprinkle some sort of external logic to handle NaN aka must have to get initial state after every NaN
+# Data needs to be processed a little before using the filter aka organize as a proper state vector and timestamp
+
 #TODO:
-# - [x] test out how tuples work or ask murray
-#   Tuples act the same as C++ vectors for the most part (they have some extra features)
-#   For an example
-#   >>> tup = ("cat", "hat", "bat")
-#   >>> x,y,z = tup
-#   >>> print(y)
-#   'hat'
-#   >>> for v in tup:
-#   ...     print("it's a",v)
-#   ...
-#   "it's a cat"
-#   "it's a hat"
-#   "it's a bat"
-#   # end example
-# - [ ] ask murray a lot of questions about python in general
-# - [x] ensure that we're saving actual values rather than pointers from the Leap to ensure data isn't lost
-#   Generaly python dosen't have pointers and values, it has a diffrent divide.
-#   We don't have to wory about it until it dose something wrong, then we'll get some code for deep copying.
-# - [ ] fix possible syntax errors
-# - [ ] clean up code
-#   I'm going to let you change the code over more to pure maths before I make any comments here.
-#   The general jist of it is, you're making a function that takes a frame and
-#           validates it, some persistant variables are expected.
-#   But working on the maths is more important than the code at the moment.
-#           (Also we don't have any sample data to test with yet.)
-# - [ ] finish up Kalman Filter Implementation
-# - [ ] feed it data and plot to see if it works the way we want it to
-# - [ ] stop thinking in terms of C++
+# - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
+# - [/] Feed it data and plot to see if it works the way we want it to
+#       - Use Andrew's hand data by this weekend
+# - [ ] Ask about what the data represents in detail
+#       - The difference between palm direction and palm normal vector
+#       - How is deviation defined in this context?
+# - [/] Create code that organizes data into usable forms for the filter
+#       - That is also another half check mark as I'm not exactly sure how the incoming data is setup in detail
+# - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
+#       - Might be able to filter each object? However, that might be slower
+#       - EX: KalmanFilter(object1), KalmanFilter(object2), KalmanFilter(object3), etc
+#       - Needs to be in this canonical form
+#
+#         [ palm position, 
+#           palm angle (normal vec), 
+#           each finger's angle of bend and angle of deviation from straight (wiggle waggle angle), 
+#           the d/dt of each of those ] 
+#
+# - [ ] Make the code a little more polymorphic to handle both 3D and 1D componential state vectors
+# - [ ] Delete junk code 
 
-class PhysicsFilter:
-    
-    def getVar(self, dataset):
-        return sqrt(numpy.apply_over_axes(numpy.std,dataset))
-    
-    # NOTE:
-    # sample data to get process variance and sensor variance of position, velocity, and acceleration
-    # keep her hand as still as she can get -sensor variance
-    # get her to spell her name -process variance
-    
-    def getCovarxva(self, positionData, velocityData, accelerationData):
-        positionCovar = getVar(positionData)
-        velocityCovar = getVar(velocityData)
-        accelerationCovar = getVar(accelerationData)
-        return numpy.diag([positionCovar, velocityCovar, accelerationCovar])
-    
-    # NOTE:
-    # sample data
-    # create for process and sensor noise covariance matrix
-    
-    def getCovarxv(self, positionData, velocityData):
-        positionCovar = getVar(positionData)
-        velocityCovar = getVar(velocityData)
-        return numpy.diag([positionCovar, velocityCovar])
-    
-    # NOTE:
-    # sample data
-    # create for process and sensor noise covariance matrix
-    
-    def predictxva(self, stateVectors, deltaT): 
-        stateVectors = numpy.reshape(stateVectors, (3, 1)) 
-        stateTransition = numpy.matrix('1, deltaT, deltaT^2; 0, 1, deltaT; 0, 0, 1') 
-        return stateTransition*stateVector
-    
-    # NOTE: 
-    # Must order the stateVector in position, velocity, acceleration for this model 
-    # stateVector = [[position],
-    #                [velocity],
-    #                [acceleration]]
-    # stateTransition = [[1, deltaT, deltaT^2],
-    #                    [0,      1,   deltaT],
-    #                    [0,      0,        1]]
-    # Another translation of the maths above
-    # stateVector         stateTransition
-    # position_k        : position_(k-1) + velocity_(k-1)*deltaT + acceleration_(k-1)*deltaT^2
-    # velocity_k        :                  velocity_(k-1)        + acceleration_(k-1)*deltaT
-    # acceleration_k    :                                          acceleration_(k-1)
-    
-    # TODO: 
-    # Make this code tuple friendly
-    # We might have to initialize the stateTransition as this:
-    # stateTransition = [[(1,1,1), (deltaT,deltaT,deltaT), (deltaT^2,deltaT^2,deltaT^2)],
-    #                    [(0,0,0), (1,1,1), (deltaT,deltaT,deltaT)],
-    #                    [(0,0,0), (0,0,0), (1,1,1)]]
-       
-    def predictxv(self, stateVectors, deltaT):
-        stateVectors = numpy.reshape(stateVectors,(2,1))
-        stateTransition = numpy.matrix('1, deltaT; 0, 1')
-        return stateTransition*stateVector
+# NOTE to SELF: How to model each hand part
 
-    # NOTE: 
-    # Must order the stateVector in position and velocity for this model
-    # stateVector = [[position],
-    #                [velocity]]
-    # stateTransition = [[1, deltaT],
-    #                    [0,      1]]
+# PALM POSITION and VELOCITY
+# - From data, extrapolate change in position / velocity
+# - State Vectors will be position and velocity
+# - Use stateTransitionxv as model
+# stateTransitionxv = [[1, deltaT],
+#                      [0, 1     ]]
+
+# PALM NORMAL VECTOR
+# - What assumptions can be made about the behavior of palm normal vector?
+#   - State Vectors will most likely be NORMAL VECTOR and change in NORMAL VECTOR
+#   - Dampen the change in NORMAL VECTOR as hand will generally be facing the leap sensor while signing
+#     (There are only a handful of letters that it would impact a little)
+#     - As long as the state transition model is semi close, it should filter ok
+# - Use modified stateTransionxv as model with a decaying change in NORMAL VECTOR
+# - stateTransitionxv = [[1, 0.5*deltaT],
+#                        [0, 0.5       ]]
+
+# FINGERS
+# - What assumptions can be made about the behavior of the fingers?
+#   - State Vectors will be bend angle and change in bend angle
+#   - Assume that the d/dt remains the same and angle will change accordingly
+#   - Use stateTransitionxv as model
+# stateTransitionxv = [[1, deltaT],
+#                      [0, 1     ]]
+
+# LIST OF DATA (AND ORDER) FROM ANDREW'S HAND:                    POTENTIAL STATE VECTORS
+# Palm Normal x,        Palm Normal y,        Palm Normal z       <- Palm Normal Vector (extrapolate change in Normal Vector)
+# Palm Direction x,     Palm Direction y,     Palm Direction z    <- ?
+# Palm Center x,        Palm Center y,        Palm Center z       <- Palm Position, pair together with velocity in filter
+# Palm Velocity x,      Palm Velocity y,      Palm Velocity z     <- Palm Velocity, pair together with position in filter
+# Thumb Deviation 1,    Thumb Deviation 2,    Thumb Deviation 3   <- ?
+# Thumb Joint Angle 1,  Thumb Joint Angle 2                       <- Joint angles, extrapolate change in angle
+# Index Deviation 1,    Index Deviation 2,    Index Deviation 3
+# Index Joint Angle 1,  Index Joint Angle 2                       <- Joint angles, extrapolate change in angle
+# Middle Deviation 1,   Middle Deviation 2,   Middle Deviation 3
+# Middle Joint Angle 1, Middle Joint Angle 2                      <- Joint angles, extrapolate change in angle
+# Ring Deviation 1,     Ring Deviation 2,     Ring Deviation 3
+# Ring Joint Angle 1,   Ring Joint Angle 2                        <- Joint angles, extrapolate change in angle
+# Pinky Deviation 1,    Pinky Deviation 2,    Pinky Deviation 3
+# Pinky Joint Angle 1,  Pinky Joint Angle 2                       <- Joint angles, extrapolate change in angle
+# Time Stamp                                                      <- Extrapolate DeltaT
+
+# palmNormal - 3D
+# palmDirection - 3D
+# palmPosition - 3D
+# palmVelocity - 3D
+# thumbDeviation - 3D
+# thumbJoint - 2D
+# pointerDeviation - 3D
+# pointerJoint - 2D
+# middleDeviation - 3D
+# middleJoint - 2D
+# ringDeviation - 3D
+# ringJoint - 3D
+# pinkyDeviation - 3D
+# pinkyJoint - 2D
+
+# NOTE:
+# Palm stuff uses 3D components, and the some of the joint angles uses only 2D components
+# Palm stuff can be evaluated off the bat fairly easily, but there will need to be some modifications to handle joint angles
+
+class Physics_Filter(object):
+
+    handParts = ["palmXVKF", "palmDirKF", "palmNormKF", "pointerDevKF", "middleDevKF", "ringDevKF", "pinkyDevKF", "thumbDevKF", "pointerJointKF", "middleJointKF", "ringJointKF", "pinkyJointKF", "thumbJointKF"]
+    
+    def __init__(self, handPart):
+        self.handPart             = handPart                                 # create 13 instances for 
+        self.processNoise         = 0                                        # defined in setupKalmanFilter()
+        self.measurementNoise     = 0                                        # defined in setupKalmanFilter()
+        self.initialStateMatrix   = 0                                        # defined in setupKalmanFilter()
+        self.priorStateMatrix     = 0                                        # defined in setupKalmanFilter
+        self.predictedStateMatrix = 0                                        # defined in predict()
+        self.deltaT               = 0                                        # defined in KalmanFilter()        
+        self.stateTransitionxv    = numpy.array(([1, self.deltaT], [0, 1]))
+        self.stateTransitionxva   = numpy.array(([1, self.deltaT, 0.25*self.deltaT**2], [0, 1, 0.5*self.deltaT], [0, 0, 0.5]))
+        self.stateTransition      = numpy.array(([1, 0.5*self.deltaT], [0, 0.5]))
+        self.priorState           = 0                                        # originally defined in getInitialState()
+        self.predictedState       = 0                                        # defined in predict()
+        self.KalmanGain           = 0                                        # defined in update()
+        self.timestamp            = 0                                        # originally defined in getInitialState()
+        self.canonicalForm        = 0
+        
+    # DESCRIPTION OF VARIABLES:
+    
+    # BACKGROUND INFORMATION -Covariance Matrices: processNoise, measurementNoise, priorStateMatrix, predictedStateMatrix
+    
+    # Derivation:
+    #      [[ Covar(position, position    ), Covar(velocity, position    ), Covar(acceleration, position    )],
+    #       [ Covar(position, velocity    ), Covar(velocity, velocity    ), Covar(acceleration, velocity    )],
+    #       [ Covar(position, acceleration), Covar(velocity, acceleration), Covar(acceleration, acceleration)]]
+    
+    # This can be re-written as: 
+    #      [[ std(position)*std(position    ), std(velocity)*std(position    ), std(acceleration)*std(position    )],
+    #       [ std(position)*std(velocity    ), std(velocity)*std(position    ), std(acceleration)*std(velocity    )],
+    #       [ std(position)*std(acceleration), std(velocity)*std(acceleration), std(acceleration)*std(acceleration)]]
+    
+    # However, we assume that the variance of one parameter isn't correlated with the variance of another parameter.
+    # Therefore, we are left with this:
+    #      [[ std(position)*std(position),     0,                               0                                  ],
+    #       [ 0,                               std(velocity)*std(position),     0                                  ],
+    #       [ 0,                               0,                               std(acceleration)*std(acceleration)]] 
+    
+    # This can be re-written as:
+    #     [[ Var(position), 0,             0                 ],
+    #      [ 0,             Var(velocity), 0                 ],
+    #      [ 0,             0,             Var(acceleration) ]]    
+    
+    # PROCESS NOISE MATRIX - use random numbers to simulate white noise
+    # processNoise
+    # Q = [[ Var(randNum), 0,            0           ],
+    #      [ 0,            Var(randNum), 0           ],
+    #      [ 0,            0,            Var(randNum)]]
+    
+    # Translation of process noise covariance matrix Q:
+    # We quantify our confidence in our model and also account of white noise.
+    # Currently using variance of random numbers but will tweak depending on the validation of data
+    # We also assume that the variance of one parameter isn't correlated with the variance of another parameter
+    # THIS PARAMETER STAYS CONSTANT
+    
+    # MEASUREMENT NOISE MATRIX -use the variance while she keeps her hand still
+    # measurementNoise
+    # R = [[ Var(position), 0,             0                 ],
+    #      [ 0,             Var(velocity), 0                 ],
+    #      [ 0,             0,             Var(acceleration) ]]
+    
+    # Translation of measurement noise covariance matrix R:
+    # We assume that the variance in our measurements as the user keeps her hand still is the variance in the sensor reading
+    # We also assume that the variance of one parameter isn't correlated with the variance of another parameter
+    # THIS PARAMETER STAYS CONSTANT
+    
+    # STATE COVARIANCE MATRIX -use the variance while she spells her name
+    # initialStateMatrix, priorStateMatrix, predictedStateMatrix
+    # P  = [[ Var(position), 0,             0                 ],
+    #       [ 0,             Var(velocity), 0                 ],
+    #       [ 0,             0,             Var(acceleration) ]]
+    
+    # Translation of  state covariance matrix P:
+    # We assume that the variance of velocity doesn't correlate with variance of position or acceleration and other enumerations.
+    # Position, velocity, and acceleration all have their own variances which we have measured previously.
+    
+    # priorStateMatrix gets updated after every iteration.
+    # The Kalman Filter makes a prediction and then compares that prediction with the measurement.
+    
+    # STATE TRANSITION MATRIX -how we model the process and make a prediction
+    # stateTransitionxva, stateTransitionxv
+    
+    # stateTransitionxva = [[1, deltaT, 0.25*deltaT^2],
+    #                       [0, 1,      0.5*deltaT   ],
+    #                       [0, 0,      0.5          ]]
+    
     # Another translation of the maths above
-    # stateVector         stateTransition
+    # priorState          stateTransition
+    # position_k        : position_(k-1) + velocity_(k-1)*deltaT + 0.25*acceleration_(k-1)*deltaT^2
+    # velocity_k        :                  velocity_(k-1)        + 0.5*acceleration_(k-1)*deltaT
+    # acceleration_k    :                                          0.5*acceleration_(k-1)
+    
+    # In this model, we predict that acceleration decays with each predictive iteration.
+    
+    # stateTransitionxv = [[1, deltaT],
+    #                      [0, 1     ]]
+    
+    # Another translation of the maths above
+    # priorState          stateTransition
     # position_k        : position_(k-1) + velocity_(k-1)*deltaT
     # velocity_k        :                  velocity_(k-1)
     
-    # TODO:
-    # Make this code tuple friendly
+    # In this model, we predict that velocity stays constant with each predictive iteration.
     
-    def updatexva(self, stateVectors, stateCovar, deltaT):
-        
-        
-    # TODO:
-    # Figure out how to do this part now
+    # STATE VECTORS
+    # priorState, predictedState
+    
+    # priorState = [[position    ],
+    #               [velocity    ],
+    #               [acceleration]]
+    
+    # predictedState = [[position    ],
+    #                   [velocity    ],
+    #                   [acceleration]]
+    
+    # Variables to store states for each iteration
+    
+    # KALMAN GAIN
+    # KalmanGain
+    
+    # KalmanGain = priorStateMatrix*(priorStateMatrix + measurementNoise).I
 
-    def setPalmOrigin(self, palm_position, dataset):
-        for data in dataset:
-            dataset = dataset - palm_position
-        return dataset
+    # KalmanGain determines how well we can trust our measurement.
+    # If we have full confidence in our measurement, then the new state will be the measuredState
+    # If we're unsure about our measurement, then the new state will be somewhere between measuredState and predictedState
     
-    def controlLimit(self, numPoints, threshold):
-        
-        dataset = numpy.zeros(numPoints)
-        
-        for data in dataset:                                               #samples data points from Leap Controller
-            dataset[data] = controller.frame().hand.palm_velocity          #only evaluates palm_velocity
-            
-            while(dataset[data]==controller.frame()):                      #wait until next frame
-                time.sleep(0.02)
-        
-        dataset_filtered = itertools.ifilterfalse(NaN, dataset)            #remove data point if NaN
-        data_filtered = numpy.array(dataset_filterd)
-        
-        mean = numpy.apply_over_axes(numpy.mean, data_filtered, (1,2,3))
-        stdDev = numpy.apply_over_axes(numpy.std, data_filtered, (1,2,3))
-                                                                           #remove possible outliers
-        dataset_norm = [(x,y,z) for (x,y,z) in dataset_filtered 
-                        if (((x,y,z) > mean - threshold*stdDev) & 
-                            ((x,y,z) < mean + threshold*stdDev))]
-        
-        mean_norm = numpy.apply_over_axes(numpy.mean, data_norm, (1,2,3))  #normalize everything
-        stdDev_norm = numpy.apply_over_axes(numpy.std, data_norm, (1,2,3))
-        
-        controlLimit = mean_norm + threshold*stdDev_norm
-        
-        return controlLimit
+    # canonicalForm
+    # Organized list of the variables of interest
+    #         [ palm position, 
+    #           palm angle (normal vec), 
+    #           each finger's angle of bend and angle of deviation from straight (wiggle waggle angle), 
+    #           the d/dt of each of those ] 
     
-        #LOGIC: controlLimit determines the behavior of the palm of the hand as it hovers over the Leap sensors and returns controlLimit
-        #       If palm_velocity is less than the controlLimit, the user is hovering her hand over the Leap.
-        #       palm_velocity was chosen because it is a value that does not rely on initial position in space or change in time
-        #TODO:  correct possible syntax errors. some of the syntax may be incorrect as palm_velocity is a tuple
-        #       fine tune threshold. some movements in ASL may accidentally be filtered out if threshold is too low
-        #NOTE:  threshold corresponds with z score in statistics. 1.645 corresponds with 95%
-        
-    def EulFilter(self, controlLimit, previousHand):                      #EulFilter pronounced "Oil Filter"
-        
-        currentFrame = controller.frame()
-        currentHand = frame.hand
-        
-        if currentHand.is_valid:
-            
-            if currentHand.palm_velocity < controlLimit:                  #if data seems reasonable, keep it
-                previousHand.palm_velocity = currentHand.palm_velocity
-                previousHand.timestamp = currentFrame.timestamp
-                previousHand.palm_position = currentHand.palm_position
-                
-                fingers = currentHand.fingers
-                
-                for finger in fingers:
-                    previousHand.finger.tip_position = finger.tip_position
-                    previousHand.finger.tip_velocity = finger.tip_velocity
-                    
-                #add other data points you'd like to keep here
-                
-                previousHand.is_valid = currentHand.is_valid
-                
-                return previousHand
-            
-            elif previousHand.is_valid:                                   #hand is moving erratically and previous data is usable
-                
-                #extrapolate position using previously measured velocities, assume previously measured velocity remains constant
-                
-                deltaT = (currentFrame.timestamp - previousHand.timestamp)*0.000001
-                #convert from microseconds to seconds because velocity is given as millimeters per second
-                
-                previousHand.palm_position = previousHand.palm_position + deltaT*previousHand.palm_velocity
-                
-                fingers = previousHand.fingers
-                
-                for finger in fingers:
-                    finger.tip_position = finger.tip_position + deltaT*finger.tip_velocity
-                    
-                #add other data points you'd like to update here
-                
-                return previousHand
-            
-            else:                                                        #hand is moving erratically and previous data is not usable
-                
-                #evaluate the good ole fashioned way
-                
-                index = 0
-                
-                while(index < 2):
-                    
-                    while(~controller.frame().hand.is_valid):            #gather some valid frames, this is probably where the hand is
-                        time.sleep(0.02)
-                        
-                    frame[index] = controller.frame()
-                    hand[index] = frame[index].hand
-                    index += 1
-                    
-                #average all the frames' data
-                previousHand.timestamp = (frame[1].timestamp + frame[0].timestamp + currentFrame.timestamp)/3
-                
-                #math up the rest of the variables of previousHand, there's probably a better way to do this
-                
-                previousHand.is_valid = True 
-                
-                return previousHand
-            
-        else:                                                            #hand is not on screen, flag as invalid
-            previousHand.is_valid = currentHand.is_valid
-            
-            return previousHand
-        
-        #LOGIC: filter helps filter out noise and makes educated guesses about hand movement
-        #       filter assumes that user is intentionally hovering hand over Leap if palm_velocity is less than controlLimit
-        #       filter dampens movement if palm_velocity is greater than controlLimit
-        #       if data seems reasonable, keep it. if not, make up some numbers. if there's no hand, data is invalid
-        #TODO:  correct possible syntax errors as some values may be tuples
-        #       establish a better procedure for invalid cases, something doesn't feel right
-        #NOTE:  euler method is considered as it requires only the position and velocity of previous data point to create a prediction
-        #       quicker and less memory extensive although not as reliable as there's no true feedback system
-        #       from my readings of kalman filter thus far, designing it for this scenario may be similar to euler with a statistics
-        
-    class previousHand:
-        
-        def __init__(self):
-            self.timestamp
-            self.palm_position
-            self.is_valid
-                
-            #aaaaand the rest
-                
-        #TODO:  make it like the Leap's Hand class. ask murray how this stuff works
+    # OTHERS
+    # timestamp, deltaT
     
-    class predictedHand:
+    # Keeps track of time
     
-        def __init__(self):
-            self.timestamp
-            self.palm_position
-            self.is_valid
+    #################################################################################
+    #                           super rough draft                                   #
+    #################################################################################
+    
+    def setupKF(self, canonicalData):
+        # process canonicalData
+        # - separate into their respective components
+        
+        #   - get deltaT
+        deltaTData = getDeltaT(timestampData)
+
+        # setupKalmanFilter for each handPart
+        handPart[0].setupKalmanFilterxv(staticPalmPositionData, staticPalmVelocityData, movingPalmPositionData, movingPalmVelocityData)
+        handPart[1].setupKalmanFilterx(staticPalmDirectionData, movingPalmDirectionData, deltaTData) 
+        handPart[2].setupKalmanFilterx(staticPalmNormData, movingPalmNormData, deltaTData) 
+        handPart[3].setupKalmanFilterx(staticPointerDevData, movingPointerDevData, deltaTData)
+        handPart[4].setupKalmanFilterx(staticMiddleDevData, movingMiddleDevData, deltaTData)
+        handPart[5].setupKalmanFilterx(staticRingDevData, movingRingDevData, deltaTData)
+        handPart[6].setupKalmanFilterx(staticPinkyDevData, movingPinkyDevData, deltaTData)
+        handPart[7].setupKalmanFilterx(staticThumbDevData, movingThumbDevData, deltaTData)
+        handPart[8].setupKalmanFilterx(staticPointerJointData, movingPointerJointData, deltaTData)
+        handPart[9].setupKalmanFilterx(staticMiddleJointData, movingMiddleJointData, deltaTData)
+        handPart[10].setupKalmanFilterx(staticRingJointData, movingRingJointData, deltaTData)
+        handPart[11].setupKalmanFilterx(staticPinkyJointData, movingPinkyJointData, deltaTData)
+        handPart[12].setupKalmanFilterx(staticThumbJointData, movingThumbJointData, deltaTData)
+        
+        # TODO:
+        # - [ ] Probably organize this much nicer to look less messy (organize into arrays)
+        # - [ ] Joint data only has 2 components, modify code a little
+        
+    def KalmanFilter(self, canonicalForm, measuredTime):
+        
+        getDeltaTk(measuredTime)
+       
+        # process canonicalForm
+        
+        # predict each datapoint
+        handPart[0].predictxv() #palmxv
+        handPart[1].predict() #palmDir 
+        handPart[2].predict() #palmNorm 
+        handPart[3].predictx() #pointerDev
+        handPart[4].predictx() #middleDev
+        handPart[5].predictx() #ringDev
+        handPart[6].predictx() #pinkyDev
+        handPart[7].predictx() #thumbDev
+        handPart[8].predictx() #pointerJoint
+        handPart[9].predictx() #middleJoint
+        handPart[10].predictx() #ringJoint
+        handPart[11].predictx() #pinkyJoint
+        handPart[12].predictx() #thumbJoint
+        
+        # update each datapoint
+        handPart[0].update(palmxvMeasuredState)
+        handPart[1].update(palmDirMeasuredState)
+        handPart[2].update(palmNormMeasuredState)
+        handPart[3].update(pointerDevMeasuredState)
+        handPart[4].update(middleDevMeasuredState)
+        handPart[5].update(ringDevMeasuredState)
+        handPart[6].update(pinkyDevMeasuredState)
+        handPart[7].update(thumbDevMeasuredState)
+        handPart[8].update(pointerJointMeasuredState)
+        handPart[9].update(middleJointMeasuredState)
+        handPart[10].update(ringJointMeasuredState)
+        handPart[11].update(pinkyJointMeasuredState)
+        handPart[12].update(thumbJointMeasuredState)
+        
+        # canonicalize processed data
+        palmPosition  = handPart[0].priorState[0]
+        palmVelocity  = handPart[0].priorState[1]
+        palmDirection = handPart[1].priorState[0]
+        palmNormal    = handPart[2].priorState[0]
+        pointerDev    = handPart[3].priorState[0]
+        middleDev     = handPart[4].priorState[0]
+        ringDev       = handPart[5].priorState[0]
+        pinkyDev      = handPart[6].priorState[0]
+        thumbDev      = handPart[7].priorState[0]
+        pointerJoint  = handPart[8].priorState[0]
+        middleJoint   = handPart[9].priorState[0]
+        ringJoint     = handPart[10].priorState[0]
+        pinkyJoint    = handPart[11].priorState[0]
+        thumbJoint    = handPart[12].priorState[0]
+        
+        filteredCanonicalForm = [palmPosition, palmVelocity, palmDirection, palmNormal, pointerDev, middleDev, ringDev, pinkyDev, thumbDev, pointerJoint, middleJoint, ringJoint, pinkyJoint, thumbJoint]
+        
+        return filteredCanonicalForm 
+    
+    # TODO:
+    # - [ ] Make sure the components are correct
+    # - [ ] Find a way to make this shorter and cleaner looking
+    
+    #################################################################################
+    #                             end rough draft                                   #
+    #################################################################################
+    
+    def setupKalmanFilterxva(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
+        
+        staticAccelerationData  = self.calcAcceleration(staticVelocityData)
+        movingAccelerationData  = self.calcAcceleration(movingVelocityData)
+        
+        self.measurementNoise   = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
+        self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
+        
+    # When position and velocity data is available and acceleration is extrapolated
+    
+    def setupKalmanFilterxv(self, staticPositionData, staticVelocityData, movingPositionData, movingVelocityData):
+        
+        self.measurementNoise   = self.getCovarxv(staticPositionData, staticVelocityData)
+        self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
+        
+    # When position and velocity data is available
+    # Use for palm position and velocity
+    
+    def setupKalmanFilterxa(self, staticPositionData, movingPositionData, timestampData):
+        
+        deltaTData             = self.getDeltaT(timestampData)
+        staticVelocityData     = self.calcVelocity(staticPositionData,deltaTData)
+        movingVelocityData     = self.calcVelocity(movingvelocityData,deltaTData)
+        staticAccelerationData = self.calcAcceleration(staticVelocityData)
+        movingAccelerationData = self.calcAcceleration(movingAccelerationData)
+        
+        self.measurementNoise   = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
+        self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
+        
+    # When only position and timestamp data is available, extrapolate velocity and acceleration
+    
+    def setupKalmanFilterx(self, staticPositionData, movingPositionData, timestampData):
+        
+        deltaTData         = self.getDeltaT(timestampData)
+        staticVelocityData = self.calcVelocity(staticPositionData,deltaTData)
+        movingVelocityData = self.calcVelocity(movingvelocityData,deltaTData)
+
+        self.measurementNoise   = self.getCovarxv(staticPositionData, staticVelocityData)
+        self.initialStateMatrix = self.getCovarxv(movingPositionData, movingVelocityData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise    
+        
+    # When only position and timestamp data is available, extrapolate velocity
+    # Use for finger joints
+    
+    def setupKalmanFilterDEMO(self, staticPositionData, staticVelocityData, staticAccelerationData, movingPositionData, movingVelocityData, movingAccelerationData):
+        
+        self.measurementNoise   = self.getCovarxva(staticPositionData, staticVelocityData, staticAccelerationData)
+        self.initialStateMatrix = self.getCovarxva(movingPositionData, movingVelocityData, movingAccelerationData)
+        self.priorStateMatrix   = self.initialStateMatrix
+        
+        confidenceFactor  = 0.5
+        self.processNoise = confidenceFactor*self.measurementNoise
+        
+    # Essentially the same logic as the others, but specifically made for the demo
+    
+    def getInitialStatexva(self, positionData, velocityData, timestamp):
+        
+        accelerationData = self.calcAcceleration(velocityData)
+        
+        stateVectors = numpy.zeros((3,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        stateVectors[2] = numpy.average(accelerationData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
+        
+    # Filter needs to get a decent initial state value in order to be accurate
+    # Therefore, Leap will need to poll for a few frames and estimate the state
+    # Defines initial priorState
+    # When position and velocity data is available, extrapolate acceleration
+    
+    def getInitialStatexv(self, positionData, velocityData, timestamp):
+        
+        stateVectors = numpy.zeros((2,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
+        
+    # When position and velocity data is available
+    
+    def getInitialStatexa(self, positionData, timestamp):
+        
+        deltaTData       = self.getDeltaT(timestamp)
+        velocityData     = self.calcVelocity(positionData,deltaTData)
+        accelerationData = self.calcAcceleration(velocityData,deltaTData)
+        
+        stateVectors = numpy.zeros((3,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        stateVectors[2] = numpy.average(accelerationData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
+        
+    # When only position and timestamp data is available, extrapolate velocity and acceleration
+    
+    def getInitialStatex(self, positionData, timestamp):
+        
+        deltaTData   = self.getDeltaT(timestamp)
+        velocityData = self.calcVelocity(positionData,deltaTData)
+        
+        stateVectors = numpy.zeros((2,1,3))
+        
+        stateVectors[0] = numpy.average(positionData, axis=0)
+        stateVectors[1] = numpy.average(velocityData, axis=0)
+        
+        self.timestamp = timestamp
+        
+        self.priorState = stateVectors
+    
+    def KalmanFilterxva(self, measuredState, measuredTime):
+        
+        self.timestamp = measuredTime
+        self.deltaT    = self.getDeltaTk(measuredTime)
+        self.predictxva()
+        
+        priorState = self.update(measuredState)
+        
+        return priorState
+    
+    # Kalman Filter only does one iteration
+    # Use for palm position and velocity
+    
+    def KalmanFilterxv(self, measuredState, measuredTime):
+        
+        self.timestamp = measuredTime
+        self.deltaT    = self.getDeltaTk(measuredTime)
+        self.predictxv()
+        
+        priorState = self.update(measuredState)
+        
+        return priorState
+    
+    # Kalman Filter only does one iteration
+    # Use for palm normal vector
+    
+    def KalmanFilterxvaDEMO(self, measuredState, deltaT, stateTransition):
+        
+        self.deltaT = deltaT
+        self.predictxvaDEMO(stateTransition)
+        priorState  = self.update(measuredState)
+        
+        return priorState
+    
+    # Essentially the same logic as the others, but demo is a different model
+    
+    def predictxva(self):
+        
+        self.predictedState = numpy.zeros((3,3))
+        
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransitionxva[:,:,index],self.priorState[:,index])
+            index = index+1
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxva[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+
+        self.predictedStateMatrix = self.priorStateMatrix
+ 
+        index = 0
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxva[:,:,index].T) + self.processNoise[:,index]
+            index = index+1
+       
+    def predictxv(self):
+        
+        self.predictedState = numpy.zeros((2,3))
+        
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransitionxv[:,:,index],self.priorState[:,index])
+            index = index+1
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxv[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+
+        self.predictedStateMatrix = self.priorStateMatrix
             
-            #aaaaand the rest
+        index = 0
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxv[:,:,index].T) + self.processNoise[:,index]
+            index = index+1
+            
+    def predict(self):
         
-        #TODO:  make it like the Leap's Hand class. ask murray how this stuff works
+        self.predictedState = numpy.zeros((2,3))
         
-    def StatsFilter(self, numFrames, previousHand):                    #Statistical Filter Implementation
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransition[:,:,index],self.priorState[:,index])
+            index = index+1
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransition[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+
+        self.predictedStateMatrix = self.priorStateMatrix
+            
+        index = 0
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransition[:,:,index].T) + self.processNoise[:,index]
+            index = index+1        
+    
+    def predictxvaDEMO(self, stateTransition):
+        
+        self.stateTransition = stateTransition 
+
+        self.predictedState = numpy.zeros((3,3))
+        
+        index = 0
+        while index < 3:
+            self.predictedState[:,index] = numpy.dot(self.stateTransition[:,:,index],self.priorState[:,index])
+            index = index+1
+            
+        # predictedState = stateTransition dot priorState
+        
+        intermediateMatrix = self.priorStateMatrix
+        
+        index = 0
+        while index < 3:
+            intermediateMatrix[:,index] = numpy.dot(self.stateTransition[:,:,index], self.priorStateMatrix[:, index])
+            index = index+1
+            
+        index = 0
+        
+        self.predictedStateMatrix = self.priorStateMatrix
+        while index < 3:
+            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransition[:,:,index].T) + self.processNoise[:,index]
+            index = index+1  
+            
+        # predictedStateMatrix = stateTransition dot priorStateMatrix dot stateTransition Transposed + processNoise
+    
+    def update(self, measuredState):
+        
+        scalingFactor = self.predictedStateMatrix+self.measurementNoise
+        
+        inv = scalingFactor
+
+        index = 0
+
+        while index < 3:
+            inv[:,:,index] = numpy.linalg.inv(scalingFactor[:,:,index])
+            index = index+1
         
         index = 0
         
-        while(index < numFrames):                                      #grab a lot of frames
-            frame[index] = controller.frame((numFrames - index))
-            hand[index] = frame[index].hand
-            index += 1
+        self.KalmanGain = self.predictedStateMatrix
         
-        if (sizeof(itertools.ifilterfalse(hand.is_valid, hand[index]) > 0):
-        #if one of those frames don't contain a hand, flag as invalid
-            previousHand.is_valid = False
+        while index < 3:
+            self.KalmanGain[:,:,index] = numpy.dot(self.predictedStateMatrix[:,:,index], inv[:,:,index])
+            index = index+1
             
-            return previousHand
-            
-        else: 
-            #average out all the important stuff and save into previousHand
-            previousHand.palm_velocity = numpy.apply_over_axis(numpy.mean, hand.palm_velocity, (1,2,3))
-            previousHand.palm_position = numpy.apply_over_axis(numpy.mean, hand.palm_position, (1,2,3))
-            
-            #do this for all the data points
-            
-            return previousHand
-            
-        #LOGIC: filter helps filter out noise and approximates hand position for a given time frame
-        #       filter assumes that if at any point in the sample time frame the hand is not on screen, it is invalid
-        #TODO:  all of the code essentially
-        #NOTE:  StatsFilter is memory extensive, requires a lot of calculations and may lag but can potentially be most accurate
-            
-    def KalFilter(self, currentHand, previousHand, predictedHand):
+        index = 0
         
-        xk = numpy.matrix('positionk, velocityk')
-        transitionMatrix = numpy.matrix('1, deltaT; 0, 1')
-            #predict position = previous position + deltaT previous velocity and velocity remains constant
+        # KalmanGain = predictedStateMatrix dot inverse of (predictedStateMatrix + measurementNoise)
         
-        #residuals = abs(predictedHand - currentHand)
-        #covariance noise = sqrt(predictedHand.stdDev - currentHand.stdDev)
-        #model will be based on x(t) + v(t) or x(t) + x'(t) as only velocity and position is readily available
+        while index < 3:
+            self.priorState[:,index] = self.predictedState[:,index] + numpy.dot(self.KalmanGain[:,:,index],numpy.subtract(measuredState[:,index],self.predictedState[:,index]))
+            index = index+1
+            
+        # priorState = predictedState + KalmanGain dot (measuredState - predictedState)
         
-        #k+1 is our predictedHand
-        #k is our currentHand or observedHand
-        #k-1 is our previousHand
+        intermediateArray = self.KalmanGain
+        
+        index = 0
+        
+        while index < 3:
+            intermediateArray[:,:,index] = numpy.dot(self.KalmanGain[:,:,index], self.predictedStateMatrix[:,:,index])
+            index = index+1
             
-            return previousHand, predictedHand
+        self.priorStateMatrix = numpy.subtract(self.predictedStateMatrix,intermediateArray)
+        
+        # priorStateMatrix = predictedStateMatrix - (KalmanGain dot predictedStateMatrix)
+        
+        return self.priorState
+    
+    # TODO:
+    # - [ ] Change to be more polymorphic
+
+    def getDeltaTk(self, measuredTime):
+        
+        self.deltaT    = measuredTime - self.timestamp
+        self.timestamp = measuredTime
+        
+    # Gets deltaT for one iteration
+    
+    def getDeltaT(self, timestampData):
+                                                                       
+        return numpy.diff(timestampData)      
+        
+    # Gets a deltaT array
+    
+    def getVar(self, dataset):
+        
+        return numpy.var(dataset,axis=0)
+    
+    def getCovarxva(self, positionData, velocityData, accelerationData):
+        
+        covarMatrix = numpy.zeros((3,3,3))
+        
+        covarMatrix[0,0,:] = self.getVar(positionData)
+        covarMatrix[1,1,:] = self.getVar(velocityData)
+        covarMatrix[2,2,:] = self.getVar(accelerationData)
+        
+        return covarMatrix
+    
+    def getCovarxv(self, positionData, velocityData):
+        
+        covarMatrix = numpy.zeros((2,2,3))
+        
+        covarMatrix[0,0,:] = self.getVar(positionData)
+        covarMatrix[1,1,:] = self.getVar(velocityData)
+        
+        return covarMatrix
+    
+    def calcAcceleration(self, velocityData):
             
-        #LOGIC: filter helps filter out noise and approximates hand position for a sample time frame
-        #       filter compares predicted outcome with actual outcome then determines kalman filter variables to use in the next iteration
-        #TODO:  ask murray if function can return more than 1 variable
-        #       figure out how to code all this and do all of the code essentially
-        #NOTE:  KalFilter uses the similar logic as Euler method in terms of predicting the outcome
-        #       KalFilter differs from EulFilter as it takes feedback into consideration
+        return numpy.diff(velocityData, axis=0) 
+    
+    # Calculates acceleration if we'd like to go that route, but I'm unsure if I modelled it correctly
+    # Calculates an acceleration array
+    
+    def calcAccelk(self, velocity):
+        
+        velocity = numpy.array(velocity)
+        priorState = numpy.array(self.priorState[1])
+        
+        return numpy.subtract(velocity, priorState)
+        
+    # Calculates acceleration for one iteration
+    
+    def calcVelocity(self, positionData, deltaTData):
+        
+        return numpy.diff(positionData, axis=0) / deltaTData
+    
+    # Calculates velocity, some of the data might not have this available
+    # Calculates a velocity array
+    
+    def calcVelocityk(self, position, deltaT):
+        
+        position = numpy.array(position)
+        priorState = numpy.array(self.priorState[0])
+        
+        return (numpy.subtract(position, priorState)) / deltaT
+    
+    # Calculates velocity for one iteration
+    
+    def conditionStateVector(self, stateVectors):
+        
+        return numpy.reshape(stateVectors, (len(stateVectors),1))
+    
+    # Makes sure that the stateVectors are in the correct form for matrix math
+    
+    def resetStateMatrix(self):
+        
+        self.priorStateMatrix = self.initialStateMatrix
+        
+    # Makes sure that the covariance matrix doesn't diverge
+    # Might not be needed, depends on how well the system is modelled
+    
+    def buildStateVectorxv(self, position, velocity):
+        
+        stateVector = numpy.zeros((2,1,3))
+        
+        stateVector[0] = position
+        stateVector[1] = velocity
+        
+        return stateVector
+            
+    def buildStateVectorxva(self, position, velocity):
+        
+        stateVector = numpy.zeros((3,1,3))
+
+        stateVector[0] = position
+        stateVector[1] = velocity
+        stateVector[2] = self.getAccelk(velocity)
+        
+        return stateVector
+    
+    # For data that has position and velocity and extrapolates acceleration
+    
+    def buildStateVectorxa(self, position, deltaT):
+        
+        stateVector = numpy.zeros((3,1,3))
+
+        stateVector[0] = position
+        stateVector[1] = self.getVelocityk(position, deltaT)
+        stateVector[2] = self.getAccelk(velocity)
+        
+        return stateVector
+    
+    # For data that only contains position and extrapolates velocity and acceleration
+    
+    def buildStateVectorx(self, position, deltaT):
+        
+        stateVector = numpy.zeros((2,1,3))
+        
+        velocity = self.getVelocityk(position, deltaT)
+        
+        stateVector[0] = position
+        stateVector[1] = velocity
+        
+        return stateVector
+    
+    # For data that only contains position and extrapolates velocity
+    
+    def dataProcessor(self, spot, array):
+        
+        return [x[spot] for x in array]
+            
+    # Separates the state vectors into their respective position, velocity, and acceleration
+    # OR separates the (x,y,z) components 
+    
+    def deTuplizer(self, list_of_tups):
+        
+        return [list(tup) for tup in list_of_tups]
+    
+    # turns a list of tuples into a list of lists
+    
+    def deTuplizerk(self, tup):
+        
+        return list(tup)
+    
+    # turns a tup into a list
+    
