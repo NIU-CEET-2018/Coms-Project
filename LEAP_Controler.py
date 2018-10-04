@@ -4,6 +4,7 @@
 """
 
 import os
+import subprocess
 
 def raw_event_source(handler):
     """Spawn a python 2 interpreter for interfacing with the LEAP and pass
@@ -23,3 +24,8 @@ def event_loop(t_seq_in):
         data = eval(event)
         t_seq_in(data)
     raw_event_source(event_handler)
+
+def read_char(letter):
+    if letter == "":
+        raise ValueError("No Char Provided")
+    subprocess.call('python2','Leap_asl_Andrew_Windows/LeapReader.py',letter)

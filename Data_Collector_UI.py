@@ -11,7 +11,8 @@ from PyQt5.QtWidgets import (QMainWindow, QLabel, QGridLayout, QWidget,
                             QMessageBox, QLineEdit)
 from PyQt5.QtGui import *
 from PyQt5.QtCore import QSize, Qt, QTimer, QThread
-from Leap_Reader import *
+# sys.path.insert(0, './Leap_asl_Andrew_Windows')
+from LEAP_Controler import read_char
 import time
 
 class proctor(QWidget):
@@ -37,7 +38,7 @@ class proctor(QWidget):
 class Collector(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+        self.qle = None
         self.initUI()
         
     def initUI(self):
@@ -52,9 +53,9 @@ class Collector(QMainWindow):
         prompt.setAlignment(QtCore.Qt.AlignCenter)
         gridLayout.addWidget(prompt, 0, 0)
             
-        qle = QLineEdit(self)
+        self.qle = QLineEdit(self)
         
-        qle.textChanged[str].connect(self.onChanged)
+        self.qle.textChanged[str].connect(self.onChanged)
         
         
         
@@ -69,24 +70,14 @@ class Collector(QMainWindow):
     #Action taken on changed text
     def onChanged(self, text):
         
-        QLineEdit.clear(self)
+        QLineEdit.clear(self.qle)
         
         self.w = proctor()
         self.w.show()
         
-        listener = LeapSerrializingListner()
-        controller = Leap.Controller()
-        
-        csv_path = create_file(text)
-        with open(csv_path, 'a+') as csv_file:
-            global CSV_WRITER
-            CSV_WRITER = csv.writer(csv_file, delimiter=',', lineterminator='\n')
-            controller.add_listener(listener)
-            
-            QTimer.singleshot(5000, controller.remove_listener(listener))
-            QTimer.singleshot(10, self.w.quit())
-            
-        
+        read_char(text)
+        self.close()
+
     #closeEvent
     def closeEvent(self, event):
         

@@ -145,27 +145,36 @@ def add_header():
     header.append('Time Stamp')
     CSV_WRITER.writerow(header)
 
-def record_single_char():
+def record_single_char(l=""):
     """"Record a single gesgure sample to a file."""
     # Create a sample listener and controller
     listener = LeapSerrializingListner()
     controller = Leap.Controller()
 
-    letter = str(raw_input("Input letter: "))
+    letter=""
+    if l = "":
+        letter = str(raw_input("Input letter: "))
+    else:
+        letter = l
     csv_path = create_file(letter)
     with open(csv_path, 'a+') as csv_file:
         global CSV_WRITER
         CSV_WRITER = csv.writer(csv_file, delimiter=',', lineterminator='\n')
         add_header()
-        raw_input("Press enter to record.")
+        if l = "":
+            raw_input("Press enter to record.")
 
         # Have the sample listener receive events from the controller
         controller.add_listener(listener)
 
         # Keep this process running until Enter is pressed
-        print "Press Enter to quit..."
         try:
-            sys.stdin.readline()
+            if l = "":
+                print "Press Enter to quit..."
+                sys.stdin.readline()
+            else:
+                # TODO: wait for visable hand
+                # TODO: wait for no hand for over 1 second
         except KeyboardInterrupt:
             pass
         finally:
@@ -173,4 +182,8 @@ def record_single_char():
             controller.remove_listener(listener)
 
 if __name__ == "__main__":
-    record_single_char()
+    import sys
+    if len(sys.argv)>1:
+        record_single_char(sys.argv[1])
+    else:
+        record_single_char()
