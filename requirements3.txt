@@ -4,3 +4,4 @@ tensorflow
 coverage
 autocomplete
 pylint
+pyqt5
