@@ -11,8 +11,10 @@ import sys
 import math
 import numpy as np
 import Leap
+import threading
+from datetime import datetime
 
-DEBUG_LEAP_PRINTS = True
+DEBUG_LEAP_PRINTS = False
 DATA_DIR = './Data_Folder/'
 CSV_WRITER = None
 
@@ -29,6 +31,18 @@ def save_frame_canonical(frame):
               "- fingers:   " + str(len(frame.fingers))    + "\n" + \
               "- tools:     " + str(len(frame.tools))      + "\n" + \
               "- gestures:  " + str(len(frame.gestures()))
+    global are_there_hands
+    global are_there_no_hands
+    if len(frame.hands)>0:
+        if not are_there_hands.is_set():
+            # print "Hand Found"
+            are_there_hands.set()
+            are_there_no_hands.clear()
+    else:
+        if not are_there_no_hands.is_set():
+            # print "Hand Lost"
+            are_there_hands.clear()
+            are_there_no_hands.set()
 
     # Get hands
     for hand in frame.hands:
@@ -147,12 +161,18 @@ def add_header():
 
 def record_single_char(l=""):
     """"Record a single gesgure sample to a file."""
+
+    global are_there_hands
+    global are_there_no_hands
+    are_there_hands = threading.Event()
+    are_there_no_hands = threading.Event()
+
     # Create a sample listener and controller
     listener = LeapSerrializingListner()
     controller = Leap.Controller()
 
     letter=""
-    if l = "":
+    if l == "":
         letter = str(raw_input("Input letter: "))
     else:
         letter = l
@@ -161,7 +181,7 @@ def record_single_char(l=""):
         global CSV_WRITER
         CSV_WRITER = csv.writer(csv_file, delimiter=',', lineterminator='\n')
         add_header()
-        if l = "":
+        if l == "":
             raw_input("Press enter to record.")
 
         # Have the sample listener receive events from the controller
@@ -169,12 +189,26 @@ def record_single_char(l=""):
 
         # Keep this process running until Enter is pressed
         try:
-            if l = "":
+            if l == "":
                 print "Press Enter to quit..."
                 sys.stdin.readline()
             else:
-                # TODO: wait for visable hand
-                # TODO: wait for no hand for over 1 second
+                timeout_reached = False
+                timeout = 10
+                timeout_counter = datetime.utcnow()
+                while not are_there_hands.wait(.1):
+                    if (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
+                        raise ValueError("No hands found.")
+                timeout_counter = None
+                timeout = 3
+                while not timeout_reached:
+                    while are_there_hands.wait(.1):
+                        timeout_counter = None
+                    if are_there_no_hands.is_set():
+                        if timeout_counter == None:
+                            timeout_counter = datetime.utcnow()
+                        elif (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
+                            timeout_reached = True
         except KeyboardInterrupt:
             pass
         finally:
