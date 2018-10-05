@@ -34,6 +34,8 @@ class proctor(QWidget):
         self.setWindowTitle('Make the gesture for ' + str(text))
         
         proctorLabel = QLabel("Make the letter " + str(text), self)
+        proctorLabel.setAlignment(QtCore.Qt.AlignCenter)
+        gridLayout.addWidget(proctorLabel, 0, 0)
         
         self.show()
         
@@ -57,6 +59,7 @@ class Collector(QMainWindow):
         gridLayout.addWidget(prompt, 0, 0)
             
         self.qle = QLineEdit(self)
+        self.qle.setAlignment
         
         self.qle.textChanged[str].connect(self.onChanged)
         
