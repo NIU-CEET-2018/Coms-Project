@@ -3,6 +3,7 @@
 """Filters out and cleans up suspicious/noisy data from a stream."""
 
 import numpy
+import pandas
 
 # HOW TO USE IN main():
 
@@ -30,21 +31,7 @@ import numpy
 # - [ ] Fine tune process noise matrix, EXTREMELY IMPORTANT
 # - [/] Feed it data and plot to see if it works the way we want it to
 #       - Use Andrew's hand data by this weekend
-# - [ ] Ask about what the data represents in detail
-#       - The difference between palm direction and palm normal vector
-#       - How is deviation defined in this context?
-# - [/] Create code that organizes data into usable forms for the filter
-#       - That is also another half check mark as I'm not exactly sure how the incoming data is setup in detail
-# - [ ] Restructure to handle a crap ton of different positions and velocities of objects, maybe?
-#       - Might be able to filter each object? However, that might be slower
-#       - EX: KalmanFilter(object1), KalmanFilter(object2), KalmanFilter(object3), etc
-#       - Needs to be in this canonical form
-#
-#         [ palm position, 
-#           palm angle (normal vec), 
-#           each finger's angle of bend and angle of deviation from straight (wiggle waggle angle), 
-#           the d/dt of each of those ] 
-#
+# - [ ] Test newly added code by this weekend
 # - [ ] Make the code a little more polymorphic to handle both 3D and 1D componential state vectors
 # - [ ] Delete junk code 
 
@@ -103,7 +90,7 @@ import numpy
 # middleDeviation - 3D
 # middleJoint - 2D
 # ringDeviation - 3D
-# ringJoint - 3D
+# ringJoint - 2D
 # pinkyDeviation - 3D
 # pinkyJoint - 2D
 
@@ -299,19 +286,19 @@ class Physics_Filter(object):
         movingDeltaTData = getDeletaT(movingTimestampData)
 
         # setupKalmanFilter for each handPart
-        handPart[0].setupKalmanFilterxv(staticPalmPositionData, staticPalmVelocityData, movingPalmPositionData, movingPalmVelocityData)
-        handPart[1].setupKalmanFilterx(staticPalmDirectionData, movingPalmDirectionData, staticDeltaTData, movingDeltaTData) 
-        handPart[2].setupKalmanFilterx(staticPalmNormData, movingPalmNormData, staticDeltaTData, movingDeltaTData) 
-        handPart[3].setupKalmanFilterx(staticPointerDevData, movingPointerDevData, staticDeltaTData, movingDeltaTData)
-        handPart[4].setupKalmanFilterx(staticMiddleDevData, movingMiddleDevData, staticDeltaTData, movingDeltaTData)
-        handPart[5].setupKalmanFilterx(staticRingDevData, movingRingDevData, staticDeltaTData, movingDeltaTData)
-        handPart[6].setupKalmanFilterx(staticPinkyDevData, movingPinkyDevData, staticDeltaTData, movingDeltaTData)
-        handPart[7].setupKalmanFilterx(staticThumbDevData, movingThumbDevData, staticDeltaTData, movingDeltaTData)
-        handPart[8].setupKalmanFilterx(staticPointerJointData, movingPointerJointData, staticDeltaTData, movingDeltaTData)
-        handPart[9].setupKalmanFilterx(staticMiddleJointData, movingMiddleJointData, staticDeltaTData, movingDeltaTData)
-        handPart[10].setupKalmanFilterx(staticRingJointData, movingRingJointData, staticDeltaTData, movingDeltaTData)
-        handPart[11].setupKalmanFilterx(staticPinkyJointData, movingPinkyJointData, staticDeltaTData, movingDeltaTData)
-        handPart[12].setupKalmanFilterx(staticThumbJointData, movingThumbJointData, staticDeltaTData, movingDeltaTData)
+        handPart[0].setupKalmanFilterxv(staticPalmPositionData, staticPalmVelocityData,  movingPalmPositionData, movingPalmVelocityData)
+        handPart[1].setupKalmanFilterx(staticPalmDirectionData, movingPalmDirectionData, staticDeltaTData,       movingDeltaTData) 
+        handPart[2].setupKalmanFilterx(staticPalmNormData,      movingPalmNormData,      staticDeltaTData,       movingDeltaTData) 
+        handPart[3].setupKalmanFilterx(staticPointerDevData,    movingPointerDevData,    staticDeltaTData,       movingDeltaTData)
+        handPart[4].setupKalmanFilterx(staticMiddleDevData,     movingMiddleDevData,     staticDeltaTData,       movingDeltaTData)
+        handPart[5].setupKalmanFilterx(staticRingDevData,       movingRingDevData,       staticDeltaTData,       movingDeltaTData)
+        handPart[6].setupKalmanFilterx(staticPinkyDevData,      movingPinkyDevData,      staticDeltaTData,       movingDeltaTData)
+        handPart[7].setupKalmanFilterx(staticThumbDevData,      movingThumbDevData,      staticDeltaTData,       movingDeltaTData)
+        handPart[8].setupKalmanFilterx(staticPointerJointData,  movingPointerJointData,  staticDeltaTData,       movingDeltaTData)
+        handPart[9].setupKalmanFilterx(staticMiddleJointData,   movingMiddleJointData,   staticDeltaTData,       movingDeltaTData)
+        handPart[10].setupKalmanFilterx(staticRingJointData,    movingRingJointData,     staticDeltaTData,       movingDeltaTData)
+        handPart[11].setupKalmanFilterx(staticPinkyJointData,   movingPinkyJointData,    staticDeltaTData,       movingDeltaTData)
+        handPart[12].setupKalmanFilterx(staticThumbJointData,   movingThumbJointData,    staticDeltaTData,       movingDeltaTData)
         
         # TODO:
         # - [ ] Probably organize this much nicer to look less messy (organize into arrays)
@@ -622,25 +609,25 @@ class Physics_Filter(object):
             index = index+1
             
     def predict(self):
-        
-        self.predictedState = numpy.zeros((2,3))
+        numComponents = numpy.ma.size(self.priorState, 1)
+        self.predictedState = numpy.zeros((2,numComponents))
         
         index = 0
-        while index < 3:
+        while index < numComponents:
             self.predictedState[:,index] = numpy.dot(self.stateTransition[:,:,index],self.priorState[:,index])
             index = index+1
         
         intermediateMatrix = self.priorStateMatrix
         
         index = 0
-        while index < 3:
+        while index < numComponents:
             intermediateMatrix[:,index] = numpy.dot(self.stateTransition[:,:,index], self.priorStateMatrix[:, index])
             index = index+1
 
         self.predictedStateMatrix = self.priorStateMatrix
             
         index = 0
-        while index < 3:
+        while index < numComponents:
             self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransition[:,:,index].T) + self.processNoise[:,index]
             index = index+1        
     
@@ -680,8 +667,10 @@ class Physics_Filter(object):
         inv = scalingFactor
 
         index = 0
-
-        while index < 3:
+        
+        numComponents = numpy.ma.size(measuredState,1)
+        
+        while index < numComponents:
             inv[:,:,index] = numpy.linalg.inv(scalingFactor[:,:,index])
             index = index+1
         
@@ -689,7 +678,7 @@ class Physics_Filter(object):
         
         self.KalmanGain = self.predictedStateMatrix
         
-        while index < 3:
+        while index < numComponents:
             self.KalmanGain[:,:,index] = numpy.dot(self.predictedStateMatrix[:,:,index], inv[:,:,index])
             index = index+1
             
@@ -697,7 +686,7 @@ class Physics_Filter(object):
         
         # KalmanGain = predictedStateMatrix dot inverse of (predictedStateMatrix + measurementNoise)
         
-        while index < 3:
+        while index < numComponents:
             self.priorState[:,index] = self.predictedState[:,index] + numpy.dot(self.KalmanGain[:,:,index],numpy.subtract(measuredState[:,index],self.predictedState[:,index]))
             index = index+1
             
@@ -707,7 +696,7 @@ class Physics_Filter(object):
         
         index = 0
         
-        while index < 3:
+        while index < numComponents:
             intermediateArray[:,:,index] = numpy.dot(self.KalmanGain[:,:,index], self.predictedStateMatrix[:,:,index])
             index = index+1
             
@@ -787,12 +776,6 @@ class Physics_Filter(object):
         return (numpy.subtract(position, priorState)) / deltaT
     
     # Calculates velocity for one iteration
-    
-    def conditionStateVector(self, stateVectors):
-        
-        return numpy.reshape(stateVectors, (len(stateVectors),1))
-    
-    # Makes sure that the stateVectors are in the correct form for matrix math
     
     def resetStateMatrix(self):
         
