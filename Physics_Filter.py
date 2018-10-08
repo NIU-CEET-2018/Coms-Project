@@ -32,7 +32,10 @@ import pandas
 # - [/] Feed it data and plot to see if it works the way we want it to
 #       - Use Andrew's hand data by this weekend
 # - [ ] Test newly added code by this weekend
+<<<<<<< HEAD
 # - [ ] Make the code a little more polymorphic to handle both 3D and 1D componential state vectors
+=======
+>>>>>>> Physics_Filter
 # - [ ] Delete junk code 
 
 # NOTE to SELF: How to model each hand part
@@ -79,13 +82,14 @@ import pandas
 # Pinky Joint Angle 1,  Pinky Joint Angle 2                       <- Joint angles, extrapolate change in angle
 # Time Stamp                                                      <- Extrapolate DeltaT
 
-# palmNormal - 3D
-# palmDirection - 3D
-# palmPosition - 3D
-# palmVelocity - 3D
-# thumbDeviation - 3D
-# thumbJoint - 2D
+# palmNormal       - 3D
+# palmDirection    - 3D
+# palmPosition     - 3D
+# palmVelocity     - 3D
+# thumbDeviation   - 3D
+# thumbJoint       - 2D
 # pointerDeviation - 3D
+<<<<<<< HEAD
 # pointerJoint - 2D
 # middleDeviation - 3D
 # middleJoint - 2D
@@ -93,6 +97,15 @@ import pandas
 # ringJoint - 2D
 # pinkyDeviation - 3D
 # pinkyJoint - 2D
+=======
+# pointerJoint     - 2D
+# middleDeviation  - 3D
+# middleJoint      - 2D
+# ringDeviation    - 3D
+# ringJoint        - 2D
+# pinkyDeviation   - 3D
+# pinkyJoint       - 2D
+>>>>>>> Physics_Filter
 
 # NOTE:
 # Palm stuff uses 3D components, and the some of the joint angles uses only 2D components
@@ -102,8 +115,8 @@ class Physics_Filter(object):
 
     handParts = ["palmXVKF", "palmDirKF", "palmNormKF", "pointerDevKF", "middleDevKF", "ringDevKF", "pinkyDevKF", "thumbDevKF", "pointerJointKF", "middleJointKF", "ringJointKF", "pinkyJointKF", "thumbJointKF"]
     
-    def __init__(self, handPart):
-        self.handPart             = handPart                                 # create 13 instances for 
+    def __init__(self):
+        self.handPart             = handParts                                # create 13 instances for 
         self.processNoise         = 0                                        # defined in setupKalmanFilter()
         self.measurementNoise     = 0                                        # defined in setupKalmanFilter()
         self.initialStateMatrix   = 0                                        # defined in setupKalmanFilter()
@@ -243,6 +256,16 @@ class Physics_Filter(object):
     #                           super rough draft                                   #
     #################################################################################
     
+<<<<<<< HEAD
+=======
+    def initializeHand(self):
+        
+        for part in Handparts:
+            Handparts[part] = Physics_Filter(Handparts[part])
+            
+    # Initializes all the parts of the hand for the filter
+    
+>>>>>>> Physics_Filter
     def setupKF(self, staticAbsoluteFilePath, movingAbsoluteFilePath):
         
         staticCanonicalData = self.dataSorter(staticAbsoluteFilePath)
@@ -301,11 +324,16 @@ class Physics_Filter(object):
         handPart[12].setupKalmanFilterx(staticThumbJointData,   movingThumbJointData,    staticDeltaTData,       movingDeltaTData)
         
         # TODO:
-        # - [ ] Probably organize this much nicer to look less messy (organize into arrays)
+        # - [ ] Probably organize this much nicer to look less messy
         # - [ ] Joint data only has 2 components, modify code a little
         
         # NOTE:
+<<<<<<< HEAD
         # This was also brute forced
+=======
+        # This was also brute forced.
+        # It doesn't return anything as it's saved as variables in each of the handPart's Physics_Filter instance 
+>>>>>>> Physics_Filter
         
     def KalmanFilter(self, canonicalForm):
 
@@ -316,6 +344,7 @@ class Physics_Filter(object):
         
         # process canonicalForm
         palmxvMeasuredState       = [canonicalForm[0],  canonicalForm[1]]
+<<<<<<< HEAD
         palmDirMeasuredState      = [canonicalForm[2],  handPart[1].calcVelocityk(canonicalForm[2], handPart[1].deltaT)]
         palmNormMeasuredState     = [canonicalForm[3],  handPart[2].calcVelocityk(canonicalForm[3], handPart[2].deltaT)]
         pointerDevMeasuredState   = [canonicalForm[4],  handPart[3].calcVelocityk(canonicalForm[4], handPart[3].deltaT)]
@@ -325,6 +354,17 @@ class Physics_Filter(object):
         thumbDevMeasuredState     = [canonicalForm[8],  handPart[7].calcVelocityk(canonicalForm[8], handPart[7].deltaT)]
         pointerJointMeasuredState = [canonicalForm[9],  handPart[8].calcVelocityk(canonicalForm[9], handPart[8].deltaT)]
         middleJointMeasuredState  = [canonicalForm[10], handPart[9].calcVelocityk(canonicalForm[10], handPart[9].deltaT)]
+=======
+        palmDirMeasuredState      = [canonicalForm[2],  handPart[1].calcVelocityk(canonicalForm[2],   handPart[1].deltaT)]
+        palmNormMeasuredState     = [canonicalForm[3],  handPart[2].calcVelocityk(canonicalForm[3],   handPart[2].deltaT)]
+        pointerDevMeasuredState   = [canonicalForm[4],  handPart[3].calcVelocityk(canonicalForm[4],   handPart[3].deltaT)]
+        middleDevMeasuredState    = [canonicalForm[5],  handPart[4].calcVelocityk(canonicalForm[5],   handPart[4].deltaT)]
+        ringDevMeasuredState      = [canonicalForm[6],  handPart[5].calcVelocityk(canonicalForm[6],   handPart[5].deltaT)]
+        pinkyDevMeasuredState     = [canonicalForm[7],  handPart[6].calcVelocityk(canonicalForm[7],   handPart[6].deltaT)]
+        thumbDevMeasuredState     = [canonicalForm[8],  handPart[7].calcVelocityk(canonicalForm[8],   handPart[7].deltaT)]
+        pointerJointMeasuredState = [canonicalForm[9],  handPart[8].calcVelocityk(canonicalForm[9],   handPart[8].deltaT)]
+        middleJointMeasuredState  = [canonicalForm[10], handPart[9].calcVelocityk(canonicalForm[10],  handPart[9].deltaT)]
+>>>>>>> Physics_Filter
         ringJointMeasuredState    = [canonicalForm[11], handPart[10].calcVelocityk(canonicalForm[11], handPart[10].deltaT)]
         pinkyJointMeasuredState   = [canonicalForm[12], handPart[11].calcVelocityk(canonicalForm[12], handPart[11].deltaT)]
         thumbJointMeasuredState   = [canonicalForm[13], handPart[12].calcVelocityk(canonicalForm[13], handPart[12].deltaT)]
@@ -416,6 +456,7 @@ class Physics_Filter(object):
     # When position and velocity data is available
     # Use for palm position and velocity
     
+<<<<<<< HEAD
     def setupKalmanFilterxa(self, staticPositionData, movingPositionData, staticTimestampData, movingTimestampData):
         
         staticDeltaTData       = self.getDeltaT(staticTimestampData)
@@ -434,6 +475,8 @@ class Physics_Filter(object):
         
     # When only position and timestamp data is available, extrapolate velocity and acceleration
     
+=======
+>>>>>>> Physics_Filter
     def setupKalmanFilterx(self, staticPositionData, movingPositionData, staticTimestampData, movingTimestampData):
         
         staticDeltaTData       = self.getDeltaT(staticTimestampData)
@@ -494,27 +537,9 @@ class Physics_Filter(object):
         
     # When position and velocity data is available
     
-    def getInitialStatexa(self, positionData, timestamp):
+    def getInitialStatex(self, positionData, timestampData):
         
-        deltaTData       = self.getDeltaT(timestamp)
-        velocityData     = self.calcVelocity(positionData,deltaTData)
-        accelerationData = self.calcAcceleration(velocityData,deltaTData)
-        
-        stateVectors = numpy.zeros((3,1,3))
-        
-        stateVectors[0] = numpy.average(positionData, axis=0)
-        stateVectors[1] = numpy.average(velocityData, axis=0)
-        stateVectors[2] = numpy.average(accelerationData, axis=0)
-        
-        self.timestamp = timestamp
-        
-        self.priorState = stateVectors
-        
-    # When only position and timestamp data is available, extrapolate velocity and acceleration
-    
-    def getInitialStatex(self, positionData, timestamp):
-        
-        deltaTData   = self.getDeltaT(timestamp)
+        deltaTData   = self.getDeltaT(timestampData)
         velocityData = self.calcVelocity(positionData,deltaTData)
         
         stateVectors = numpy.zeros((2,1,3))
@@ -561,29 +586,6 @@ class Physics_Filter(object):
         return priorState
     
     # Essentially the same logic as the others, but demo is a different model
-    
-    def predictxva(self):
-        
-        self.predictedState = numpy.zeros((3,3))
-        
-        index = 0
-        while index < 3:
-            self.predictedState[:,index] = numpy.dot(self.stateTransitionxva[:,:,index],self.priorState[:,index])
-            index = index+1
-        
-        intermediateMatrix = self.priorStateMatrix
-        
-        index = 0
-        while index < 3:
-            intermediateMatrix[:,index] = numpy.dot(self.stateTransitionxva[:,:,index], self.priorStateMatrix[:, index])
-            index = index+1
-
-        self.predictedStateMatrix = self.priorStateMatrix
- 
-        index = 0
-        while index < 3:
-            self.predictedStateMatrix[:,index] = numpy.dot(intermediateMatrix[:,index], self.stateTransitionxva[:,:,index].T) + self.processNoise[:,index]
-            index = index+1
        
     def predictxv(self):
         
@@ -609,6 +611,10 @@ class Physics_Filter(object):
             index = index+1
             
     def predict(self):
+<<<<<<< HEAD
+=======
+        
+>>>>>>> Physics_Filter
         numComponents = numpy.ma.size(self.priorState, 1)
         self.predictedState = numpy.zeros((2,numComponents))
         
@@ -705,9 +711,6 @@ class Physics_Filter(object):
         # priorStateMatrix = predictedStateMatrix - (KalmanGain dot predictedStateMatrix)
         
         return self.priorState
-    
-    # TODO:
-    # - [ ] Change to be more polymorphic
 
     def getDeltaTk(self, measuredTime):
         
@@ -909,6 +912,7 @@ class Physics_Filter(object):
 
         timeStamp         = numpy.array(rawData[:][headers[37]].values.tolist())
 
+<<<<<<< HEAD
         palmNormal = [[x,y,z] for x in palmNormalx for y in palmNormaly for z in palmNormalz]
         palmDirection = [[x,y,z] for x in palmDirectionx for y in palmDirectiony for z in palmDirectionz]
         palmCenter = [[x,y,z] for x in palmCenterx for y in palmCentery for z in palmCenterz]
@@ -927,3 +931,24 @@ class Physics_Filter(object):
         canonicalData = [palmCenter, palmVelocity, palmDirection, palmNormal, indexDeviation, middleDeviation, ringDeviation, pinkyDeviation, thumbDeviation, indexJointAngle, middleJointAngle, ringJointAngle, pinkyJointAngle, thumbJointAngle, timeStamp]
 
         return canonicalData
+=======
+        palmNormal       = [[x,y,z] for x in palmNormalx       for y in palmNormaly      for z in palmNormalz     ]
+        palmDirection    = [[x,y,z] for x in palmDirectionx    for y in palmDirectiony   for z in palmDirectionz  ]
+        palmCenter       = [[x,y,z] for x in palmCenterx       for y in palmCentery      for z in palmCenterz     ]
+        palmVelocity     = [[x,y,z] for x in palmVelocityx     for y in palmVelocityy    for z in palmVelocityz   ]
+        thumbDeviation   = [[a,b,c] for a in thumbDeviation1   for b in thumbDeviation2  for c in thumbDeviation3 ]
+        thumbJointAngle  = [[a,b]   for a in thumbJointAngle1  for b in thumbJointAngle2                          ]
+        indexDeviation   = [[a,b,c] for a in indexDeviation1   for b in indexDeviation2  for c in indexDeviation3 ]
+        indexJointAngle  = [[a,b]   for a in indexJointAngle1  for b in indexJointAngle2                          ]
+        middleDeviation  = [[a,b,c] for a in middleDeviation1  for b in middleDeviation2 for c in middleDeviation3]
+        middleJointAngle = [[a,b]   for a in middleJointAngle1 for b in middleJointAngle2                         ]
+        ringDeviation    = [[a,b,c] for a in ringDeviation1    for b in ringDeviation2   for c in ringDeviation3  ]
+        ringJointAngle   = [[a,b]   for a in ringJointAngle1   for b in ringJointAngle2                           ]
+        pinkyDeviation   = [[a,b,c] for a in pinkyDeviation1   for b in pinkyDeviation2  for c in pinkyDeviation3 ]
+        pinkyJointAngle  = [[a,b]   for a in pinkyJointAngle1  for b in pinkyJointAngle2                          ]
+
+        canonicalData = [palmCenter, palmVelocity, palmDirection, palmNormal, indexDeviation, middleDeviation, ringDeviation, pinkyDeviation, thumbDeviation, indexJointAngle, middleJointAngle, ringJointAngle, pinkyJointAngle, thumbJointAngle, timeStamp]
+
+        return canonicalData
+    
+>>>>>>> Physics_Filter
