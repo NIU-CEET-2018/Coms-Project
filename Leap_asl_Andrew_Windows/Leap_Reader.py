@@ -14,10 +14,11 @@ import Leap
 import threading
 from datetime import datetime
 
+
 DEBUG_LEAP_PRINTS = False
 DATA_DIR = './Data_Folder/'
 CSV_WRITER = None
-
+count = 0
 def safe_frame_serial(frame):
     """Save a leap frame using the built in seiralization."""
     raise Exception("TODO!")
@@ -191,7 +192,7 @@ def record_single_char(l=""):
         try:
             if l == "":
                 print "Press Enter to quit..."
-                sys.stdin.readline()
+                sys.stdin.readline()                
             else:
                 timeout_reached = False
                 timeout = 10
@@ -217,7 +218,8 @@ def record_single_char(l=""):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv)>1:
-        record_single_char(sys.argv[1])
-    else:
-        record_single_char()
+    for number in range(100):
+        if len(sys.argv)>1:
+           record_single_char(sys.argv[1])
+        else:
+           record_single_char()
