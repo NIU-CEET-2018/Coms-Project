@@ -2,9 +2,7 @@
 cls
 
 :: +---------------------------------------------------------------------------------------------+
-:: | This is a short startup script for non-technical people.                                    |
-:: | It (should) start the current working version of the tool.                                  |
-:: | This script will (probably) be depricated and removed from later version of the repository. |
+:: | This is a script to ensure the build system's runtime setup is consistent.                  |
 :: +---------------------------------------------------------------------------------------------+
 
 :: +--------------------------+

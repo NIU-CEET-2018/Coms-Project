@@ -6,16 +6,21 @@
 import os
 import subprocess
 
+import os
+
+
 def raw_event_source(handler):
     """Spawn a python 2 interpreter for interfacing with the LEAP and pass
 the events it generates to the handler."""
-    sub = os.popen('python2 LEAP_Reader.py')
+    sub = os.popen('c:\python27\python LEAP_Reader.py')
+    
+   
     l = sub.readline()
+    print("it works")
     while l:
-        # TODO: Check the length of sub's buffer and clear/warn if it gets too large.
         handler(l)
         l = sub.readline()
-
+        
 def event_loop(t_seq_in):
     """Call t_seq_in for each Leap event."""
     def event_handler(event):
@@ -25,7 +30,14 @@ def event_loop(t_seq_in):
         t_seq_in(data)
     raw_event_source(event_handler)
 
+
+if __name__ == "__main__":
+    raw_event_source(lambda x:print(x))
+
 def read_char(letter):
     if letter == "":
         raise ValueError("No Char Provided")
-    subprocess.call('python2','Leap_asl_Andrew_Windows/LeapReader.py',letter)
+    #subprocess.call('python2','./LeapReader.py',letter)
+    subprocess.call('c:\python27\python.exe Leap_asl_Andrew_Windows\LEAP_Reader.py')
+
+

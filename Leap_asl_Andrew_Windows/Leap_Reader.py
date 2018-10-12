@@ -11,11 +11,14 @@ import sys
 import math
 import numpy as np
 import Leap
+import threading
+from datetime import datetime
 
-DEBUG_LEAP_PRINTS = True
+
+DEBUG_LEAP_PRINTS = False
 DATA_DIR = './Data_Folder/'
 CSV_WRITER = None
-
+count = 0
 def safe_frame_serial(frame):
     """Save a leap frame using the built in seiralization."""
     raise Exception("TODO!")
@@ -29,6 +32,18 @@ def save_frame_canonical(frame):
               "- fingers:   " + str(len(frame.fingers))    + "\n" + \
               "- tools:     " + str(len(frame.tools))      + "\n" + \
               "- gestures:  " + str(len(frame.gestures()))
+    global are_there_hands
+    global are_there_no_hands
+    if len(frame.hands)>0:
+        if not are_there_hands.is_set():
+            # print "Hand Found"
+            are_there_hands.set()
+            are_there_no_hands.clear()
+    else:
+        if not are_there_no_hands.is_set():
+            # print "Hand Lost"
+            are_there_hands.clear()
+            are_there_no_hands.set()
 
     # Get hands
     for hand in frame.hands:
@@ -81,6 +96,7 @@ def save_frame_canonical(frame):
             # The angle between the bones in the direction of normal
             # The angle between the bones and the plane of (normal & prior bone)
 
+        data.append(frame.timestamp)
         CSV_WRITER.writerow(data)
 
 class LeapSerrializingListner(Leap.Listener):
@@ -141,34 +157,74 @@ def add_header():
             header.append(flang+" Deviation "+str(n))
         for n in [1, 2]:
             header.append(flang+" Joint Angle "+str(n))
+    header.append('Time Stamp')
     CSV_WRITER.writerow(header)
 
-def record_single_char():
+def record_single_char(l=""):
     """"Record a single gesgure sample to a file."""
+
+    global are_there_hands
+    global are_there_no_hands
+    are_there_hands = threading.Event()
+    are_there_no_hands = threading.Event()
+
     # Create a sample listener and controller
     listener = LeapSerrializingListner()
     controller = Leap.Controller()
 
-    letter = str(raw_input("Input letter: "))
+    letter=""
+    if l == "":
+        print "Please enter a letter or word"
+        print "(Blank to close)"
+        letter = str(raw_input(": "))
+        if letter == '':
+            return ''
+    else:
+        letter = l
     csv_path = create_file(letter)
     with open(csv_path, 'a+') as csv_file:
         global CSV_WRITER
         CSV_WRITER = csv.writer(csv_file, delimiter=',', lineterminator='\n')
         add_header()
-        raw_input("Press enter to record.")
 
         # Have the sample listener receive events from the controller
         controller.add_listener(listener)
 
         # Keep this process running until Enter is pressed
-        print "Press Enter to quit..."
         try:
-            sys.stdin.readline()
+            timeout_reached = False
+            timeout = 10
+            timeout_counter = datetime.utcnow()
+            print "Waiting for Hands..."
+            while not are_there_hands.wait(.1):
+                if (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
+                    #raise ValueError("No hands found.")
+                    print "No hands Found."
+                    return
+            print "Recording..."
+            timeout_counter = None
+            timeout = 3
+            while not timeout_reached:
+                while are_there_hands.wait(.1):
+                    timeout_counter = None
+                if are_there_no_hands.is_set():
+                    if timeout_counter == None:
+                        timeout_counter = datetime.utcnow()
+                    elif (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
+                        timeout_reached = True
+            print "Finished"
         except KeyboardInterrupt:
             pass
         finally:
             # Remove the sample listener when done
             controller.remove_listener(listener)
+    return letter
 
 if __name__ == "__main__":
-    record_single_char()
+    import sys
+    if len(sys.argv)>1:
+       record_single_char(sys.argv[1])
+    else:
+       l = None
+       while l != "":
+           l=record_single_char()

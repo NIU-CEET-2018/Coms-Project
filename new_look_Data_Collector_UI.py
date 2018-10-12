@@ -9,36 +9,38 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import (QMainWindow, QLabel, QGridLayout, QWidget,
                             QApplication, QPushButton, QDesktopWidget,
                             QMessageBox, QLineEdit)
+import PyQt5.QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtCore import QSize, Qt, QTimer, QThread
-# sys.path.insert(0, './Leap_asl_Andrew_Windows')
+
+sys.path.insert(0, './Leap_asl_Andrew_Windows')
 from LEAP_Controler import read_char
 import time
 
-class proctor(QWidget):
-
-    def __init__(self):
-        QWidget.__init__(self)
-    
-        self.initUI()
-        
-    def initUI(self):
-        
-        centralWidget = qWidget(self)
-        self.setCentralWidget(centralWidget)
-        
-        gridLayout = QGridLayout(self)
-        centralWidget.setLayout(gridLayout)
-        
-        self.resize(400, 300)        
-        self.setWindowTitle('Make the gesture for ' + str(text))
-        
-        proctorLabel = QLabel("Make the letter " + str(text), self)
-        proctorLabel.setAlignment(QtCore.Qt.AlignCenter)
-        gridLayout.addWidget(proctorLabel, 0, 0)
-        
-        self.show()
-        
+#class proctor(QWidget):
+#
+#    def __init__(self):
+#        QWidget.__init__(self)
+#    
+#        self.initUI()
+#        
+#    def initUI(self):
+#        
+#        centralWidget = QWidget(self)
+#        #self.setCentralWidget(centralWidget)
+#        
+#        gridLayout = QGridLayout(self)
+#        
+#        centralWidget.setLayout(gridLayout)
+#        text =0
+#        self.resize(400, 300)        
+#        self.setWindowTitle('Make the gesture for ' + str(text))
+#        
+#        proctorLabel = QLabel("Make the letter " + str(text), self)
+#        proctorLabel.setAlignment(QtCore.Qt.AlignCenter)
+#        gridLayout.addWidget(proctorLabel, 0, 0)
+#        
+#        self.show()
 
 class Collector(QMainWindow):
     def __init__(self):
@@ -47,44 +49,52 @@ class Collector(QMainWindow):
         self.initUI()
         
     def initUI(self):
-        
+        text=0
         centralWidget = QWidget(self)
+        
+        
         self.setCentralWidget(centralWidget)
         
         gridLayout = QGridLayout(self)
         centralWidget.setLayout(gridLayout)
-        
-        prompt = QLabel('Enter a letter', self)
+        #this is just below the text box
+        prompt = QLabel('hit any keys(A-Z) to start the Collecting data', self)
         prompt.setAlignment(QtCore.Qt.AlignCenter)
         gridLayout.addWidget(prompt, 0, 0)
-            
-        self.qle = QLineEdit(self)
-        self.qle.setAlignment
         
-        self.qle.textChanged[str].connect(self.onChanged)
+
+        #this setup the label that the program will learn
+        #self.lbl = QLabel("hit any key to start the Collecting data",self)
+        #self.lbl.move(73, 70)
+        #self.lbl2 = QLabel(,self)
+       # self.lbl2.move(155, 148)
+        
+        #Qle controls the texbox
+        qle = QLineEdit('Ready?',self)        
+        qle.move(155, 170)
+        qle.textChanged[str].connect(self.onChanged)
         
         
-        
-        #qle.textChanged[str].connect(self.onChanged)
+       
                 
         #Geometry, Naming and positioning       
         self.resize(400, 300)        
         self.setWindowTitle('Data Collector')
+        self
         self.center()
         self.show()
-
+        read_char(text)
     #Action taken on changed text
     def onChanged(self, text):
-               
-        self.w = proctor()
-        self.w.show()
         
+       
+       
+        #self.lbl2.setText(text)       
         read_char(text)
-        self.w.close()
+       
+       # self.w.close()
         
-        QLineEdit.clear(self.qle)
-
-
+    
     #closeEvent
     def closeEvent(self, event):
         
