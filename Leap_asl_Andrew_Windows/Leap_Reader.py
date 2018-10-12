@@ -174,7 +174,11 @@ def record_single_char(l=""):
 
     letter=""
     if l == "":
-        letter = str(raw_input("Input letter: "))
+        print "Please enter a letter or word"
+        print "(Blank to close)"
+        letter = str(raw_input(": "))
+        if letter == '':
+            return ''
     else:
         letter = l
     csv_path = create_file(letter)
@@ -182,44 +186,45 @@ def record_single_char(l=""):
         global CSV_WRITER
         CSV_WRITER = csv.writer(csv_file, delimiter=',', lineterminator='\n')
         add_header()
-        if l == "":
-            raw_input("Press enter to record.")
 
         # Have the sample listener receive events from the controller
         controller.add_listener(listener)
 
         # Keep this process running until Enter is pressed
         try:
-            if l == "":
-                print "Press Enter to quit..."
-                sys.stdin.readline()                
-            else:
-                timeout_reached = False
-                timeout = 10
-                timeout_counter = datetime.utcnow()
-                while not are_there_hands.wait(.1):
-                    if (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
-                        raise ValueError("No hands found.")
-                timeout_counter = None
-                timeout = 3
-                while not timeout_reached:
-                    while are_there_hands.wait(.1):
-                        timeout_counter = None
-                    if are_there_no_hands.is_set():
-                        if timeout_counter == None:
-                            timeout_counter = datetime.utcnow()
-                        elif (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
-                            timeout_reached = True
+            timeout_reached = False
+            timeout = 10
+            timeout_counter = datetime.utcnow()
+            print "Waiting for Hands..."
+            while not are_there_hands.wait(.1):
+                if (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
+                    #raise ValueError("No hands found.")
+                    print "No hands Found."
+                    return
+            print "Recording..."
+            timeout_counter = None
+            timeout = 3
+            while not timeout_reached:
+                while are_there_hands.wait(.1):
+                    timeout_counter = None
+                if are_there_no_hands.is_set():
+                    if timeout_counter == None:
+                        timeout_counter = datetime.utcnow()
+                    elif (datetime.utcnow() - timeout_counter).total_seconds() > timeout:
+                        timeout_reached = True
+            print "Finished"
         except KeyboardInterrupt:
             pass
         finally:
             # Remove the sample listener when done
             controller.remove_listener(listener)
+    return letter
 
 if __name__ == "__main__":
     import sys
-    for number in range(100):
-        if len(sys.argv)>1:
-           record_single_char(sys.argv[1])
-        else:
-           record_single_char()
+    if len(sys.argv)>1:
+       record_single_char(sys.argv[1])
+    else:
+       l = None
+       while l != "":
+           l=record_single_char()
