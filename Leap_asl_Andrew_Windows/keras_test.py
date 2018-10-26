@@ -66,7 +66,7 @@ loaded_model_json = json_file.read()
 json_file.close()
 loaded_model = model_from_json(loaded_model_json)
 # load weights into new model
-loaded_model.load_weights("model.h5")
+loaded_model.load_weights("weights.best.hdf5")
 print("Loaded model from disk")
 
 #feeds new data to model and tests
@@ -76,7 +76,7 @@ print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 #feeds single file to model for testing
 #NOTE: change the file directory in genfromtxt to test any file in the test folder
-z_predict = np.genfromtxt(DATA_DIR2 + 'f15.csv', delimiter= ',')
+z_predict = np.genfromtxt(DATA_DIR2 + 'm14.csv', delimiter= ',')
 z_predict = reshape(z_predict)
 z_final = np.reshape(z_predict, (1,50,37))
 y_predict = loaded_model.predict(z_final, verbose=0)

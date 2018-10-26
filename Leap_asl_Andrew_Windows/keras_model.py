@@ -4,7 +4,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers import Dropout
-
+from keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 
 #formats data to all the same size and removes timestamp
@@ -41,7 +41,7 @@ data_array1 = np.vstack(data_list1)
 #one hot encodes the data set
 label1 = np.ones((num_samples1, 13), dtype=int)
 for p in range(13):
-    label1[200*p:200*(p+1)] = [0]*p+[1]+[0]*(13-p)
+    label1[200*p:200*(p+1)] = [0]*p+[1]+[0]*(12-p)
 """label[488:522] = [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]
 label[522:557] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]
 label[557:596] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0]
@@ -62,7 +62,7 @@ train_data1 = [data_array1, label1]
 X, Y = train_data1[0], train_data1[1]
 
 #randomizes data set and splits into train and test sets
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=4)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=2)
 
 #creates model
 np.random.seed(7)
@@ -71,10 +71,16 @@ model.add(Dense(200, input_shape=(50, 37), activation='tanh'))
 model.add(LSTM(200, dropout=0.2, recurrent_dropout=0.2))
 model.add(Dense(13, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+#checkpoint
+filepath='weights.best.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+callbacks_list = [checkpoint]
+
 print(model.summary())
 
 #iterates model over data set
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=200, batch_size=32)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=200, batch_size=32, callbacks=callbacks_list, verbose=0)
+
 
 # Final evaluation of the model
 scores = model.evaluate(X_test, Y_test, verbose=2)
