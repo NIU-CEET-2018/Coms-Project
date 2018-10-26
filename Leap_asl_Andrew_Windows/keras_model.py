@@ -62,11 +62,7 @@ train_data1 = [data_array1, label1]
 X, Y = train_data1[0], train_data1[1]
 
 #randomizes data set and splits into train and test sets
-<<<<<<< HEAD
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=2)
-=======
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=4)
->>>>>>> f10de8e0e581902199d74a22a21c6181d07004df
 
 #creates model
 np.random.seed(7)
@@ -75,14 +71,11 @@ model.add(Dense(200, input_shape=(50, 37), activation='tanh'))
 model.add(LSTM(200, dropout=0.2, recurrent_dropout=0.2))
 model.add(Dense(13, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-<<<<<<< HEAD
 #checkpoint
 filepath='weights.best.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 callbacks_list = [checkpoint]
 
-=======
->>>>>>> f10de8e0e581902199d74a22a21c6181d07004df
 print(model.summary())
 
 #iterates model over data set
@@ -99,8 +92,6 @@ print("Accuracy: %.2f%%" % (scores[1]*100))
 model_json = model.to_json()
 with open("model.json", "w") as json_file:
     json_file.write(model_json)
-# serialize weights to HDF5
-model.save_weights("model.h5")
 print("Saved model to disk")
 
 
