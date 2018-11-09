@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense
@@ -29,33 +30,24 @@ DATA_DIR1 = './Train_Data/'
 listing1 = os.listdir(DATA_DIR1)
 num_samples1 = len(listing1)
 
-#creates 3D array
+letter_encode=[]
 for filename in os.listdir(DATA_DIR1):
+    m = re.search(r'[a-zA-Z]',filename)
+    letter_encode.append(m.group(0))
+letter_encode=list(set(letter_encode))
+
+#creates 3D array
+label1 = np.ones((num_samples1, 13), dtype=int)
+for filename in os.listdir(DATA_DIR1):
+    print(filename)
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
     normalized = reshape(x)
     reshaped = normalized.reshape(1, 50, 37)
     data_list1.append(reshaped)
+    m = re.search(r'[a-zA-Z]',filename)
+    p = letter_encode.index(m.group(0))
+    label1[len(data_list1)] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
 data_array1 = np.vstack(data_list1)
-
-
-#one hot encodes the data set
-label1 = np.ones((num_samples1, 13), dtype=int)
-for p in range(13):
-    label1[200*p:200*(p+1)] = [0]*p+[1]+[0]*(12-p)
-"""label[488:522] = [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]
-label[522:557] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]
-label[557:596] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0]
-label[596:632] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]
-label[632:669] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]
-label[669:702] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-label[702:741] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0]
-label[741:789] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]
-label[789:831] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]
-label[831:870] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]
-label[870:909] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0]
-label[909:959] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0]
-label[959:] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]"""
-
 
 #indexs the arrays with the label
 train_data1 = [data_array1, label1]
