@@ -12,7 +12,7 @@ import os
 def raw_event_source(handler):
     """Spawn a python 2 interpreter for interfacing with the LEAP and pass
 the events it generates to the handler."""
-    sub = os.popen('c:\python27\python LEAP_Reader.py')
+    sub = os.popen('c:\python27\python2.exe LEAP_Reader.1.py')
     
    
     l = sub.readline()
