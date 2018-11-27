@@ -84,22 +84,26 @@ def predict_data(predict):
                 'l': np.array([0,0,0,0,0,0,0,0,0,0,0,1,0]),
                 'm': np.array([0,0,0,0,0,0,0,0,0,0,0,0,1])}
 
+    global times
     #iterates over dictionary to find corresponding letter
-    print(predict)
     for key, value in dictionary.items():
         if np.array_equal(predict, value):
             #if change > 95%:
+            times+=1
             if key!=old:
+                times=0
                 old=key
+            if times==10:
                 print(key)
 
+times=0
 model = loadmodel()
 predict=np.zeros((50,37))
 old=None
 def all_the_Things(data):
     global predict
     if data[0]!='[':
-        print("not a data")
+        print(data)
         return
     data=eval(data) # TODO: make that a parser
     data = np.array([data])
