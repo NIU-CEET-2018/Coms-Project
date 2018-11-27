@@ -10,7 +10,6 @@ from sklearn.model_selection import train_test_split
 
 #formats data to all the same size and removes timestamp
 def reshape(y):
-    y = np.delete(y, 0, 0)
     z = np.delete(y, -1, 1)
     numrows = len(z)
     if numrows <= 50:
@@ -26,7 +25,7 @@ def reshape(y):
 
 #definition
 data_list1 = []
-DATA_DIR1 = './Train_Data/'
+DATA_DIR1 = './Normalize/'
 listing1 = os.listdir(DATA_DIR1)
 num_samples1 = len(listing1)
 
@@ -35,19 +34,23 @@ for filename in os.listdir(DATA_DIR1):
     m = re.search(r'[a-zA-Z]',filename)
     letter_encode.append(m.group(0))
 letter_encode=list(set(letter_encode))
+letter_encode.sort()
 
 #creates 3D array
 label1 = np.ones((num_samples1, 13), dtype=int)
 for filename in os.listdir(DATA_DIR1):
-    print(filename)
+    #print(filename)
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
     normalized = reshape(x)
     reshaped = normalized.reshape(1, 50, 37)
     data_list1.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
-    label1[len(data_list1)] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
+    #print(p,m.group(0))
+    label1[len(data_list1)-1] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
 data_array1 = np.vstack(data_list1)
+
+#exit(0)
 
 #indexs the arrays with the label
 train_data1 = [data_array1, label1]
