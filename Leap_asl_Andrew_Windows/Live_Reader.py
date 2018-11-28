@@ -2,7 +2,7 @@ import numpy as np
 from LEAP_Controler import raw_event_source 
 from keras.models import load_model
 from keras.models import model_from_json
-
+from string import ascii_lowercase
 
 
 def loadmodel():
@@ -67,22 +67,14 @@ def predict_data(predict):
     #convert output from float to rounded integers
     predict = np.round(predict)
     predict =predict.astype(int)
-    predict = np.reshape(predict, (13,))
+    predict = np.reshape(predict, (26,))
 
     #dictionary to translate back to letter
-    dictionary = {'a': np.array([1,0,0,0,0,0,0,0,0,0,0,0,0]),
-                'b': np.array([0,1,0,0,0,0,0,0,0,0,0,0,0]),
-                'c': np.array([0,0,1,0,0,0,0,0,0,0,0,0,0]),
-                'd': np.array([0,0,0,1,0,0,0,0,0,0,0,0,0]),
-                'e': np.array([0,0,0,0,1,0,0,0,0,0,0,0,0]),
-                'f': np.array([0,0,0,0,0,1,0,0,0,0,0,0,0]),
-                'g': np.array([0,0,0,0,0,0,1,0,0,0,0,0,0]),
-                'h': np.array([0,0,0,0,0,0,0,1,0,0,0,0,0]),
-                'i': np.array([0,0,0,0,0,0,0,0,1,0,0,0,0]),
-                'j': np.array([0,0,0,0,0,0,0,0,0,1,0,0,0]),
-                'k': np.array([0,0,0,0,0,0,0,0,0,0,1,0,0]),
-                'l': np.array([0,0,0,0,0,0,0,0,0,0,0,1,0]),
-                'm': np.array([0,0,0,0,0,0,0,0,0,0,0,0,1])}
+    dictionary = {}
+    x = 0
+    for c in ascii_lowercase:
+        dictionary[c] = np.array([0]*x +[1] + [0]*(25-x))
+        x+=1
 
     global times
     #iterates over dictionary to find corresponding letter

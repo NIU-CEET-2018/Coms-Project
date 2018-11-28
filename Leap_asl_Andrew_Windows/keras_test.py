@@ -4,12 +4,14 @@ import os
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.models import load_model
-
+from Normalize import norm
+import re
 from keras.models import model_from_json
 from sklearn.model_selection import train_test_split
+from string import ascii_lowercase
 
 
-data_list2=[]
+
 #same reshape as model program
 def reshape(y):
     y = np.delete(y, 0 ,0)
@@ -27,37 +29,39 @@ def reshape(y):
     return result
 
 #definitions
+data_list2 = []
 DATA_DIR2 = './Test_Data/'
 listing2 = os.listdir(DATA_DIR2)
 num_samples2=len(listing2)
 
-#creating 3D array
-for filename in os.listdir(DATA_DIR2):
-    x1 = np.genfromtxt(DATA_DIR2 + filename,delimiter=',')    
-    normalized1 = reshape(x1)
-    reshaped1 = normalized1.reshape(1, 50, 37)
-    data_list2.append(reshaped1)
-data_array2 = np.vstack(data_list2)
 
-#onehot encoding
-label2=np.ones((num_samples2,13),dtype = int)
-label2[0:20] = [1,0,0,0,0,0,0,0,0,0,0,0,0]
-label2[20:40] = [0,1,0,0,0,0,0,0,0,0,0,0,0]
-label2[40:60] = [0,0,1,0,0,0,0,0,0,0,0,0,0]
-label2[60:80] = [0,0,0,1,0,0,0,0,0,0,0,0,0]
-label2[80:100] = [0,0,0,0,1,0,0,0,0,0,0,0,0]
-label2[100:120] = [0,0,0,0,0,1,0,0,0,0,0,0,0]
-label2[120:140] = [0,0,0,0,0,0,1,0,0,0,0,0,0]
-label2[140:160] = [0,0,0,0,0,0,0,1,0,0,0,0,0]
-label2[160:180] = [0,0,0,0,0,0,0,0,1,0,0,0,0]
-label2[180:200] = [0,0,0,0,0,0,0,0,0,1,0,0,0]
-label2[200:220] = [0,0,0,0,0,0,0,0,0,0,1,0,0]
-label2[220:240] = [0,0,0,0,0,0,0,0,0,0,0,1,0]
-label2[240:] = [0,0,0,0,0,0,0,0,0,0,0,0,1]
+letter_encode=[]
+for filename in os.listdir(DATA_DIR2):
+    m = re.search(r'[a-zA-Z]',filename)
+    letter_encode.append(m.group(0))
+letter_encode=list(set(letter_encode))
+letter_encode.sort()
+
+#creates 3D array
+label2 = np.ones((num_samples2, 26), dtype=int)
+for filename in os.listdir(DATA_DIR2):
+    #print(filename)
+    x = np.genfromtxt(DATA_DIR2 + filename, delimiter=',')
+    normalized = reshape(x)
+    normalized = norm(normalized)
+    reshaped = normalized.reshape(1, 50, 37)
+    data_list2.append(reshaped)
+    m = re.search(r'[a-zA-Z]',filename)
+    p = letter_encode.index(m.group(0))
+    #print(p,m.group(0))
+    label2[len(data_list2)-1] = [0]*p+[1]+[0]*(26-p-1)
+data_array2 = np.vstack(data_list2)
 
 #labels data
 train_data2=[data_array2,label2]
 (X_test,Y_test) = (train_data2[0],train_data2[1])
+print(train_data2[1].shape)
+print(train_data2[0].shape)
 
 
 # load json and create model
@@ -76,32 +80,26 @@ print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 #feeds single file to model for testing
 #NOTE: change the file directory in genfromtxt to test any file in the test folder
-z_predict = np.genfromtxt(DATA_DIR2 + 'm14.csv', delimiter= ',')
-z_predict = reshape(z_predict)
-z_final = np.reshape(z_predict, (1,50,37))
-y_predict = loaded_model.predict(z_final, verbose=0)
+for filename in os.listdir(DATA_DIR2):
+    print(filename)
+    z_predict = np.genfromtxt(DATA_DIR2 + filename, delimiter= ',')
+    z_predict = reshape(z_predict)
+    z_predict = norm(z_predict)
+    z_final = np.reshape(z_predict, (1,50,37))
+    y_predict = loaded_model.predict(z_final, verbose=0)
 
-#convert output from float to rounded integers
-predict = np.round(y_predict)
-predict =predict.astype(int)
-predict = np.reshape(predict, (13,))
+    #convert output from float to rounded integers
+    predict = np.round(y_predict)
+    predict =predict.astype(int)
+    predict = np.reshape(predict, (26,))
 
-#dictionary to translate back to letter
-dictionary = {'a': np.array([1,0,0,0,0,0,0,0,0,0,0,0,0]),
-             'b': np.array([0,1,0,0,0,0,0,0,0,0,0,0,0]),
-             'c': np.array([0,0,1,0,0,0,0,0,0,0,0,0,0]),
-             'd': np.array([0,0,0,1,0,0,0,0,0,0,0,0,0]),
-             'e': np.array([0,0,0,0,1,0,0,0,0,0,0,0,0]),
-             'f': np.array([0,0,0,0,0,1,0,0,0,0,0,0,0]),
-             'g': np.array([0,0,0,0,0,0,1,0,0,0,0,0,0]),
-             'h': np.array([0,0,0,0,0,0,0,1,0,0,0,0,0]),
-             'i': np.array([0,0,0,0,0,0,0,0,1,0,0,0,0]),
-             'j': np.array([0,0,0,0,0,0,0,0,0,1,0,0,0]),
-             'k': np.array([0,0,0,0,0,0,0,0,0,0,1,0,0]),
-             'l': np.array([0,0,0,0,0,0,0,0,0,0,0,1,0]),
-             'm': np.array([0,0,0,0,0,0,0,0,0,0,0,0,1])}
+    dictionary = {}
+    x = 0
+    for c in ascii_lowercase:
+        dictionary[c] = np.array([0]*x +[1] + [0]*(25-x))
+        x+=1
 
-#iterates over dictionary to find corresponding letter
-for key, value in dictionary.items():
-    if np.array_equal(predict, value):
-        print(key)
+    #iterates over dictionary to find corresponding letter
+    for key, value in dictionary.items():
+        if np.array_equal(predict, value):
+            print(key)
