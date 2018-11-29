@@ -101,15 +101,24 @@ class Physics_Filter(object):
         return numpy.var(dataset,axis=0)
 
     def getCovarxv(self, positionData, velocityData):
-        numComponents = numpy.array(positionData)
-        numComponents = numComponents.shape[1]
-        covarMatrix = numpy.zeros((2,2,numComponents))
+        covarMatrix = numpy.zeros((2,2))
 
-        covarMatrix[0,0,:] = self.getVar(positionData)
-        covarMatrix[1,1,:] = self.getVar(velocityData)
+        covarMatrix[0,0] = self.getVar(positionData)
+        covarMatrix[1,1] = self.getVar(velocityData)
 
         return covarMatrix
 
     def calcVelocityk(self, position):
-        return list(numpy.subtract(position, self.priorState[0]) / self.deltaT)
+        return numpy.subtract(position, self.priorState[0]) / self.deltaT
 
+    def calcVelocity(self, positionData, deltaTData):
+        velocityData = numpy.diff(positionData, axis=0)
+        
+        data = 0
+        
+        while data < len(deltaTData):
+            velocityData[data] = velocityData[data]/deltaTData[data]
+            data=data+1
+            
+        return velocityData
+    
