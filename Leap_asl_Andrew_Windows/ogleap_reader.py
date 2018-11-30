@@ -10,7 +10,7 @@ import numpy as np
 import Leap
 
 DEBUG_LEAP_PRINTS = True
-DATA_DIR = './Test_Data/'
+DATA_DIR = './New_Data/'
 CSV_WRITER = None
 
 def safe_frame_serial(frame):
@@ -51,7 +51,7 @@ def save_frame_canonical(frame):
                        hand.palm_velocity]:
             for direction in get_xyz(metric):
                 data.append(direction)
-
+        
         # Get fingers
         for finger in hand.fingers:
             def bone(num, fin=finger):
@@ -68,11 +68,26 @@ def save_frame_canonical(frame):
                 return math.cos(np.dot(bone1, bone2)) \
                        / (np.linalg.norm(bone1) * np.linalg.norm(bone2))
 
+            def finger_to_finger(bone1, bone2):
+                if bone2 is None:
+                    pass
+                else:
+                    data.append(bend_angle(bone1, bone2))
+            
+
             data.append(deviation(bone(1)))
             data.append(deviation(bone(2)))
             data.append(deviation(bone(3)))
             data.append(bend_angle(bone(1), bone(2)))
             data.append(bend_angle(bone(2), bone(3)))
+            
+            try: prev_bone
+            except NameError:
+                prev_bone = None
+
+            finger_to_finger(bone(1), prev_bone)
+            prev_bone = bone(1)
+
 
             # TODO: Put the above data in the desired canonical form.
             # The angle between the bones in the direction of normal
@@ -131,7 +146,7 @@ def create_file(letter):
 def add_header():
     """Add the column headers to the CSV file."""
     header = []
-    for vec in ['Normal', 'Direction', 'Center', 'Velocity']:
+    for vec in ['Center', 'Direction', 'Normal', 'Velocity']:
         for comp in ['x', 'y', 'z']:
             header.append("Palm "+vec+" "+comp)
     for flang in ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']:
@@ -139,6 +154,8 @@ def add_header():
             header.append(flang+" Deviation "+str(n))
         for n in [1, 2]:
             header.append(flang+" Joint Angle "+str(n))
+        if flang != 'Thumb':
+            header.append(flang+" Angle from Prev")
     header.append('Time Stamp')
     CSV_WRITER.writerow(header)
 

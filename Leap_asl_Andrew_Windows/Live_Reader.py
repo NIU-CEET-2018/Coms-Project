@@ -65,8 +65,9 @@ def predict_data(predict):
     predict = model.predict(predict, verbose=0)
 
     #convert output from float to rounded integers
-    predict = np.round(predict)
-    predict =predict.astype(int)
+    predict = predict > 0.
+    
+    predict = predict.astype(int)
     predict = np.reshape(predict, (26,))
 
     #dictionary to translate back to letter
@@ -80,13 +81,18 @@ def predict_data(predict):
     #iterates over dictionary to find corresponding letter
     for key, value in dictionary.items():
         if np.array_equal(predict, value):
-            #if change > 95%:
             times+=1
             if key!=old:
                 times=0
                 old=key
             if times==10:
                 print(key)
+                #return key
+
+#def document(key):
+    #with open("Document.txt", "w") as text_file:
+        #text_file.write(key)
+
 
 times=0
 model = loadmodel()
@@ -104,6 +110,7 @@ def all_the_Things(data):
     predict = np.delete(predict, 0, 0)
     predict1 = np.reshape(predict,(1,50,37))
     predict_data(predict1)
+    #document(key)
 
 
 

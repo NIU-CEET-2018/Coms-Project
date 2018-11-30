@@ -14,7 +14,7 @@ def reshape(y):
     z = np.delete(y, -1, 1)
     numrows = len(z)
     if numrows <= 50:
-        shape = (50, 37)
+        shape = (50, 40)
         result = np.zeros(shape)
         result[:z.shape[0], :z.shape[1]] = z
     else:
@@ -87,7 +87,7 @@ for filename in os.listdir(DATA_DIR1):
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
     normalized = reshape(x)
     normalized = norm(normalized)
-    reshaped = normalized.reshape(1, 50, 37)
+    reshaped = normalized.reshape(1, 50, 40)
     data_list1.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
@@ -107,7 +107,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_
 #creates model
 np.random.seed(7)
 model = Sequential()
-model.add(Dense(200, input_shape=(50, 37), activation='tanh'))
+model.add(Dense(200, input_shape=(50, 40), activation='tanh'))
 model.add(LSTM(200, dropout=0.2, recurrent_dropout=0.2))
 model.add(Dense(26, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])

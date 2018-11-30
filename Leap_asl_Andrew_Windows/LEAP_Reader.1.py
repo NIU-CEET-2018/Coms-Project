@@ -35,13 +35,6 @@ class Listener(Leap.Listener):
                 """Returns a tuple of the x, y, and z components of an object."""
                 return (obj.x, obj.y, obj.z)
 
-            if DEBUG_LEAP_PRINTS:
-                print str(handType) + " - " + str(hand.id) + "\n" + \
-                    " - center:    " + str(get_xyz(hand.palm_position)) + "\n" + \
-                    " - direction: " + str(get_xyz(hand.direction))     + "\n" + \
-                    " - normal:    " + str(get_xyz(hand.palm_normal))   + "\n" + \
-                    " - velocity:  " + str(get_xyz(hand.palm_velocity))
-
             data = []
 
             # Get palm metrics
@@ -73,7 +66,7 @@ class Listener(Leap.Listener):
                 data.append(deviation(bone(3)))
                 data.append(bend_angle(bone(1), bone(2)))
                 data.append(bend_angle(bone(2), bone(3)))
-    
+        
             print str(data)
 
     def state_string(self, state):

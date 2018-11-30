@@ -6,8 +6,6 @@
 import os
 import subprocess
 
-import os
-
 
 def raw_event_source(handler):
     """Spawn a python 2 interpreter for interfacing with the LEAP and pass
