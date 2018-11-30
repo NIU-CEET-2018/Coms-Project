@@ -1,28 +1,20 @@
 import numpy as np
 import os
 
-#normalization functions
-def positionxz(x):
-    y = (x + 500)/(1000)
-    return y
-def positiony(x):
-    y = x/500
-    return y
-def unitvector(x):
-    y = (x+1)/(2)
-    return y
-def velocity(x):
-    y = (x+1000)/(2000)
-    return y
-
-DATA_DIR = './Test_Data/'
-DATA_STOR = './Normalized/'
-for filename in os.listdir(DATA_DIR):
-    #loads data from each csv
-    data = np.genfromtxt(DATA_DIR + filename, delimiter=',')
-
-    #removes header
-    data = np.delete(data, 0, 0)
+def norm(data):
+    #normalization functions
+    def positionxz(x):
+        y = (x + 500)/(1000)
+        return y
+    def positiony(x):
+        y = x/500
+        return y
+    def unitvector(x):
+        y = (x+1)/(2)
+        return y
+    def velocity(x):
+        y = (x+1000)/(2000)
+        return y
 
     #uses specified normalization function on correct rows
     for x in range(len(data[:,0])):
@@ -51,6 +43,5 @@ for filename in os.listdir(DATA_DIR):
             y = data[x,column]
             y = velocity(y)
             data[x, column] = y
+    return data
 
-    #saves to new directory
-    np.savetxt(DATA_STOR + filename, data, delimiter = ',')

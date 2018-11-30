@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 #formats data to all the same size and removes timestamp
 def reshape(y):
-    y = np.delete(y, 0, 0)
+    y = np.delete(y, 0  ,0)
     z = np.delete(y, -1, 1)
     numrows = len(z)
     if numrows <= 50:
@@ -24,6 +24,49 @@ def reshape(y):
         result = z
     return result
 
+def norm(data):
+    def positionxz(x):
+        y = (x + 500)/(1000)
+        return y
+    def positiony(x):
+        y = x/500
+        return y
+    def unitvector(x):
+        y = (x+1)/(2)
+        return y
+    def velocity(x):
+        y = (x+1000)/(2000)
+        return y
+
+    #uses specified normalization function on correct rows
+    for x in range(len(data[:,0])):
+        y = data[x,0]
+        y = positionxz(y)
+        data[x, 0] = y
+
+    for x in range(len(data[:,1])):
+        y = data[x,1]
+        y = positiony(y)
+        data[x, 1] = y
+
+    for x in range(len(data[:,2])):
+        y = data[x,2]
+        y = positionxz(y)
+        data[x, 2] = y
+        
+    for column in range(3,9):
+        for x in range(len(data[:,column])):
+            y = data[x,column]
+            y = unitvector(y)
+            data[x, column] = y
+
+    for column in range(9,12):
+        for x in range(len(data[:,column])):
+            y = data[x,column]
+            y = velocity(y)
+            data[x, column] = y
+    return data
+
 #definition
 data_list1 = []
 DATA_DIR1 = './Train_Data/'
@@ -35,19 +78,24 @@ for filename in os.listdir(DATA_DIR1):
     m = re.search(r'[a-zA-Z]',filename)
     letter_encode.append(m.group(0))
 letter_encode=list(set(letter_encode))
+letter_encode.sort()
 
 #creates 3D array
-label1 = np.ones((num_samples1, 13), dtype=int)
+label1 = np.ones((num_samples1, 26), dtype=int)
 for filename in os.listdir(DATA_DIR1):
-    print(filename)
+    #print(filename)
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
     normalized = reshape(x)
+    normalized = norm(normalized)
     reshaped = normalized.reshape(1, 50, 37)
     data_list1.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
-    label1[len(data_list1)] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
+    #print(p,m.group(0))
+    label1[len(data_list1)-1] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
 data_array1 = np.vstack(data_list1)
+
+#exit(0)
 
 #indexs the arrays with the label
 train_data1 = [data_array1, label1]
@@ -61,7 +109,7 @@ np.random.seed(7)
 model = Sequential()
 model.add(Dense(200, input_shape=(50, 37), activation='tanh'))
 model.add(LSTM(200, dropout=0.2, recurrent_dropout=0.2))
-model.add(Dense(13, activation='softmax'))
+model.add(Dense(26, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 #checkpoint
 filepath='weights.best.hdf5'
@@ -71,7 +119,7 @@ callbacks_list = [checkpoint]
 print(model.summary())
 
 #iterates model over data set
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=200, batch_size=32, callbacks=callbacks_list, verbose=0)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=150, batch_size=32, callbacks=callbacks_list, verbose=0)
 
 
 # Final evaluation of the model

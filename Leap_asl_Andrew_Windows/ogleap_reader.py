@@ -10,7 +10,7 @@ import numpy as np
 import Leap
 
 DEBUG_LEAP_PRINTS = True
-DATA_DIR = './Test_Data/'
+DATA_DIR = './Data_Folder/'
 CSV_WRITER = None
 
 def safe_frame_serial(frame):
