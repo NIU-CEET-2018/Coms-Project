@@ -10,7 +10,7 @@ import numpy as np
 import Leap
 
 DEBUG_LEAP_PRINTS = True
-DATA_DIR = './New_Data/'
+DATA_DIR = './Test_Data/'
 CSV_WRITER = None
 
 def safe_frame_serial(frame):
@@ -51,7 +51,7 @@ def save_frame_canonical(frame):
                        hand.palm_velocity]:
             for direction in get_xyz(metric):
                 data.append(direction)
-        
+        prev_bone = None
         # Get fingers
         for finger in hand.fingers:
             def bone(num, fin=finger):
@@ -80,10 +80,6 @@ def save_frame_canonical(frame):
             data.append(deviation(bone(3)))
             data.append(bend_angle(bone(1), bone(2)))
             data.append(bend_angle(bone(2), bone(3)))
-            
-            try: prev_bone
-            except NameError:
-                prev_bone = None
 
             finger_to_finger(bone(1), prev_bone)
             prev_bone = bone(1)
