@@ -7,3 +7,4 @@ pylint
 pyqt5
 keras
 sklearn
+pandas
