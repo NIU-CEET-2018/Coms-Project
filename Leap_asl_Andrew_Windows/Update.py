@@ -26,7 +26,7 @@ def reshape(y):
     z = np.delete(y, -1, 1)
     numrows = len(z)
     if numrows <= 50:
-        shape = (50, 37)
+        shape = (50, 41)
         result = np.zeros(shape)
         result[:z.shape[0], :z.shape[1]] = z
     else:
@@ -37,7 +37,7 @@ def reshape(y):
     return result
 
 data_list1 = []
-DATA_DIR1 = './Train_New/'
+DATA_DIR1 = './Update_Data/'
 listing1 = os.listdir(DATA_DIR1)
 num_samples1 = len(listing1)
 
@@ -55,7 +55,7 @@ for filename in os.listdir(DATA_DIR1):
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
     normalized = reshape(x)
     normalized = norm(normalized)
-    reshaped = normalized.reshape(1, 50, 37)
+    reshaped = normalized.reshape(1, 50, 41)
     data_list1.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = ord(m.group(0)) - 97
@@ -83,4 +83,4 @@ callbacks_list = [checkpoint]
 print(model.summary())
 
 #iterates model over data set
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=100, batch_size=32, callbacks=callbacks_list, verbose=0)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32, callbacks=callbacks_list, verbose=0)

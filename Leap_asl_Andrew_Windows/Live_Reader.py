@@ -65,7 +65,7 @@ def predict_data(predict):
     predict = model.predict(predict, verbose=0)
 
     #convert output from float to rounded integers
-    predict = predict > 0.
+    predict = predict > 0.98
     
     predict = predict.astype(int)
     predict = np.reshape(predict, (26,))
@@ -96,7 +96,7 @@ def predict_data(predict):
 
 times=0
 model = loadmodel()
-predict=np.zeros((50,37))
+predict=np.zeros((50,41))
 old=None
 def all_the_Things(data):
     global predict
@@ -108,7 +108,7 @@ def all_the_Things(data):
     data=norm(data)
     predict = np.vstack((predict,data))
     predict = np.delete(predict, 0, 0)
-    predict1 = np.reshape(predict,(1,50,37))
+    predict1 = np.reshape(predict,(1,50,41))
     predict_data(predict1)
     #document(key)
 

@@ -18,7 +18,7 @@ def reshape(y):
     z = np.delete(y,-1,1)
     numrows = len(z)
     if numrows <=50:
-        shape=(50,40)
+        shape=(50,41)
         result = np.zeros(shape)
         result[:z.shape[0],:z.shape[1]] = z
     else:
@@ -49,7 +49,7 @@ for filename in os.listdir(DATA_DIR2):
     x = np.genfromtxt(DATA_DIR2 + filename, delimiter=',')
     normalized = reshape(x)
     normalized = norm(normalized)
-    reshaped = normalized.reshape(1, 50, 40)
+    reshaped = normalized.reshape(1, 50, 41)
     data_list2.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
@@ -85,7 +85,7 @@ for filename in os.listdir(DATA_DIR2):
     z_predict = np.genfromtxt(DATA_DIR2 + filename, delimiter= ',')
     z_predict = reshape(z_predict)
     z_predict = norm(z_predict)
-    z_final = np.reshape(z_predict, (1,50,40))
+    z_final = np.reshape(z_predict, (1,50,41))
     y_predict = loaded_model.predict(z_final, verbose=0)
 
     #convert output from float to rounded integers

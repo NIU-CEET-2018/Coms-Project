@@ -45,6 +45,7 @@ class Listener(Leap.Listener):
                 for direction in get_xyz(metric):
                     data.append(direction)
 
+            prev_bone = None
             # Get fingers
             for finger in hand.fingers:
                 def bone(num, fin=finger):
@@ -61,11 +62,20 @@ class Listener(Leap.Listener):
                     return math.cos(np.dot(bone1, bone2)) \
                         / (np.linalg.norm(bone1) * np.linalg.norm(bone2))
 
+                def finger_to_finger(bone1, bone2):
+                    if bone2 is None:
+                        pass
+                    else:
+                        data.append(bend_angle(bone1, bone2))
+
                 data.append(deviation(bone(1)))
                 data.append(deviation(bone(2)))
                 data.append(deviation(bone(3)))
                 data.append(bend_angle(bone(1), bone(2)))
                 data.append(bend_angle(bone(2), bone(3)))
+
+                finger_to_finger(bone(1), prev_bone)
+                prev_bone = bone(1)
         
             print str(data)
 
