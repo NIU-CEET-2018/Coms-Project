@@ -5,12 +5,17 @@
 
 import os
 import subprocess
+import platform
 
 
 def raw_event_source(handler):
     """Spawn a python 2 interpreter for interfacing with the LEAP and pass
 the events it generates to the handler."""
-    sub = os.popen('e:\python27\python2.exe LEAP_Reader.1.py')
+    sub = None
+    if platform.system() == 'Linux':
+        sub = os.popen('python2 LEAP_Reader.1.py')
+    else:
+        sub = os.popen('e:\python27\python2.exe LEAP_Reader.1.py')
     
    
     l = sub.readline()
