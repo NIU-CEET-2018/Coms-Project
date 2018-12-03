@@ -29,7 +29,7 @@ class Listener(Leap.Listener):
         frame = controller.frame()
 
         for hand in frame.hands:
-            handType = "Left hand" if hand.is_left else "Right hand"
+            handType = 1 if hand.is_left else 0
 
             def get_xyz(obj):
                 """Returns a tuple of the x, y, and z components of an object."""
@@ -76,8 +76,9 @@ class Listener(Leap.Listener):
 
                 finger_to_finger(bone(1), prev_bone)
                 prev_bone = bone(1)
+            data.append(handType)
         
-            print str(data)
+            print data
 
     def state_string(self, state):
         if state == Leap.Gesture.STATE_START:

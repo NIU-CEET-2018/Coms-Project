@@ -10,7 +10,7 @@ import numpy as np
 import Leap
 
 DEBUG_LEAP_PRINTS = True
-DATA_DIR = './Test_Data/'
+DATA_DIR = './Test/'
 CSV_WRITER = None
 
 def safe_frame_serial(frame):
@@ -90,6 +90,7 @@ def save_frame_canonical(frame):
             # The angle between the bones and the plane of (normal & prior bone)
 
         data.append(frame.timestamp)
+        data.append(handType)
         CSV_WRITER.writerow(data)
 
 class LeapSerrializingListner(Leap.Listener):
@@ -134,10 +135,10 @@ def create_file(letter):
         os.makedirs(DATA_DIR)
 
     j = 0
-    while os.path.exists(DATA_DIR+letter + str(j)+".csv"):
+    while os.path.exists(DATA_DIR+letter + "_" + str(j)+".csv"):
         j += 1
 
-    return DATA_DIR+letter + str(j)+".csv"
+    return DATA_DIR+letter+ "_" + str(j)+".csv"
 
 def add_header():
     """Add the column headers to the CSV file."""

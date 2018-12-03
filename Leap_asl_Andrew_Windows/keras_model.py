@@ -79,7 +79,7 @@ for filename in os.listdir(DATA_DIR1):
     letter_encode.append(m.group(0))
 letter_encode=list(set(letter_encode))
 letter_encode.sort()
-
+exit(0)
 #creates 3D array
 label1 = np.ones((num_samples1, 26), dtype=int)
 for filename in os.listdir(DATA_DIR1):
@@ -91,7 +91,7 @@ for filename in os.listdir(DATA_DIR1):
     data_list1.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
-    #print(p,m.group(0))
+    print(p,m.group(0))
     label1[len(data_list1)-1] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
 data_array1 = np.vstack(data_list1)
 
