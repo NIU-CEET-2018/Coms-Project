@@ -10,7 +10,7 @@ import numpy as np
 import Leap
 
 DEBUG_LEAP_PRINTS = True
-DATA_DIR = './Test/'
+DATA_DIR = './New_Data/'
 CSV_WRITER = None
 
 def safe_frame_serial(frame):
@@ -90,7 +90,6 @@ def save_frame_canonical(frame):
             # The angle between the bones and the plane of (normal & prior bone)
 
         data.append(frame.timestamp)
-        data.append(handType)
         CSV_WRITER.writerow(data)
 
 class LeapSerrializingListner(Leap.Listener):

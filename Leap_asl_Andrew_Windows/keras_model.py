@@ -7,7 +7,7 @@ from keras.layers import LSTM
 from keras.layers import Dropout
 from keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
-
+from Normalize import norm
 #formats data to all the same size and removes timestamp
 def reshape(y):
     y = np.delete(y, 0  ,0)
@@ -24,52 +24,10 @@ def reshape(y):
         result = z
     return result
 
-def norm(data):
-    def positionxz(x):
-        y = (x + 500)/(1000)
-        return y
-    def positiony(x):
-        y = x/500
-        return y
-    def unitvector(x):
-        y = (x+1)/(2)
-        return y
-    def velocity(x):
-        y = (x+1000)/(2000)
-        return y
-
-    #uses specified normalization function on correct rows
-    for x in range(len(data[:,0])):
-        y = data[x,0]
-        y = positionxz(y)
-        data[x, 0] = y
-
-    for x in range(len(data[:,1])):
-        y = data[x,1]
-        y = positiony(y)
-        data[x, 1] = y
-
-    for x in range(len(data[:,2])):
-        y = data[x,2]
-        y = positionxz(y)
-        data[x, 2] = y
-        
-    for column in range(3,9):
-        for x in range(len(data[:,column])):
-            y = data[x,column]
-            y = unitvector(y)
-            data[x, column] = y
-
-    for column in range(9,12):
-        for x in range(len(data[:,column])):
-            y = data[x,column]
-            y = velocity(y)
-            data[x, column] = y
-    return data
 
 #definition
 data_list1 = []
-DATA_DIR1 = './Train_Data/'
+DATA_DIR1 = './Train_Data2/'
 listing1 = os.listdir(DATA_DIR1)
 num_samples1 = len(listing1)
 
@@ -79,7 +37,7 @@ for filename in os.listdir(DATA_DIR1):
     letter_encode.append(m.group(0))
 letter_encode=list(set(letter_encode))
 letter_encode.sort()
-exit(0)
+
 #creates 3D array
 label1 = np.ones((num_samples1, 26), dtype=int)
 for filename in os.listdir(DATA_DIR1):
@@ -91,7 +49,7 @@ for filename in os.listdir(DATA_DIR1):
     data_list1.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
-    print(p,m.group(0))
+    #print(p,m.group(0))
     label1[len(data_list1)-1] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
 data_array1 = np.vstack(data_list1)
 

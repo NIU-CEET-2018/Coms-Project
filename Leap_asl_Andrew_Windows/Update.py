@@ -37,16 +37,10 @@ def reshape(y):
     return result
 
 data_list1 = []
-DATA_DIR1 = './Update_Data/'
+DATA_DIR1 = './Train_Data2/'
 listing1 = os.listdir(DATA_DIR1)
 num_samples1 = len(listing1)
 
-letter_encode=[]
-for filename in os.listdir(DATA_DIR1):
-    m = re.search(r'[a-zA-Z]',filename)
-    letter_encode.append(m.group(0))
-letter_encode=list(set(letter_encode))
-letter_encode.sort()
 
 #creates 3D array
 label1 = np.ones((num_samples1, 26), dtype=int)
