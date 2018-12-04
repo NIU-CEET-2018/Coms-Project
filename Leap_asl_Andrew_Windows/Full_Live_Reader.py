@@ -74,17 +74,21 @@ def predict_data2(data):
 
     #translates
     dictionary = {}
-    x = 0
-    for c in range(1,10):
-        dictionary[str(c)] = np.array([0]*x +[1] + [0]*(13-x))
-        x+=1
+    for c in range(1,5):
+        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(13-(c-1)))
+    for c in range(6,10):
+        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(13-(c-1)))
+    
     dictionary['close'] = np.array([0,0,0,0,0,0,0,0,0,1,0,0,0,0])
     dictionary['down'] = np.array([0,0,0,0,0,0,0,0,0,0,1,0,0,0])
     dictionary['left'] = np.array([0,0,0,0,0,0,0,0,0,0,0,1,0,0])
     dictionary['right'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,0])
     dictionary['up'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,1])
     
-    output(predict, dictionary)
+    if np.all(predict == np.array([0,0,0,0,1,0,0,0,0,0,0,0,0,0])):
+        pass
+    else:
+        output(predict, dictionary)
 
 def output(prediction, dictionary):
     global times
