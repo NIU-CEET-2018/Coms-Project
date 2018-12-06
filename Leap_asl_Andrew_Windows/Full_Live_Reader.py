@@ -4,6 +4,8 @@ from keras.models import load_model
 from keras.models import model_from_json
 from string import ascii_lowercase
 from Normalize import norm
+from collections import defaultdict
+
 
 def loadmodel1():
     # load json and create model
@@ -39,9 +41,11 @@ def predict_data1(data):
     predict = model1.predict(predict, verbose=0)
 
     #convert output from float to rounded integers
-    predict = predict > 0.98
-    
-    predict = predict.astype(int)
+    m = max(*list(predict)) # get the max probability
+    predict = predict > m * .8 # check for at least 80% of max found
+    if sum(*predict)*m < .8: # check that the total chance of a letter is at least 80%
+        return 'nope' # if not leave
+
     predict = np.reshape(predict, (26,))
     #print(predict)
     #dictionary to translate back to letter
@@ -51,7 +55,7 @@ def predict_data1(data):
         dictionary[c] = np.array([0]*x +[1] + [0]*(25-x))
         x+=1
 
-    output(predict, dictionary)
+    return output(predict, dictionary)
 
 #def document(key):
     #with open("Document.txt", "w") as text_file:
@@ -67,9 +71,11 @@ def predict_data2(data):
     predict = model2.predict(predict, verbose=0)
 
     #convert output from float to rounded integers
-    predict = predict > 0.98
-    
-    predict = predict.astype(int)
+    m = max(*list(predict)) # get the max probability
+    predict = predict > m * .8 # check for at least 80% of max found
+    if sum(*predict)*m < .8: # check that the total chance of a letter is at least 80%
+        return 'nope' # if not leave
+
     predict = np.reshape(predict, (14,))
 
     #translates
@@ -86,9 +92,9 @@ def predict_data2(data):
     dictionary['up'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,1])
     
     if np.all(predict == np.array([0,0,0,0,1,0,0,0,0,0,0,0,0,0])):
-        pass
+        return "nope"
     else:
-        output(predict, dictionary)
+        return output1(predict, dictionary)
 
 def output(prediction, dictionary):
     global times
@@ -96,15 +102,27 @@ def output(prediction, dictionary):
     #iterates over dictionary to find corresponding letter
     for key, value in dictionary.items():
         if np.array_equal(prediction, value):
-            times+=1
-            if key!=old:
-                times=0
-                old=key
-            if times==10:
-                print(key)
-                #return key        
+            times[key]+=1
+        else:
+            times[key]=0
+    return list(k
+               for k in times
+               if times[k]>10)
 
-times=0
+def output1(prediction, dictionary):
+    global times
+    global old
+    #iterates over dictionary to find corresponding letter
+    for key, value in dictionary.items():
+        if np.array_equal(prediction, value):
+            times[key]+=1
+        else:
+            times[key]=0
+    return list(k
+               for k in times
+               if times[k]>10)
+
+times = defaultdict(lambda: 0)
 predict1=np.zeros((50,41))
 predict2=np.zeros((50,41))
 old=None
@@ -114,7 +132,7 @@ model2 = loadmodel2()
 def splitter(data):
     if data[0]!='[':
         print(data)
-        return
+        return "nope"
     data=eval(data) # TODO: make that a parser
     data = np.array([data])
     data=norm(data)
@@ -123,14 +141,13 @@ def splitter(data):
     data=np.delete(data, -1, 1)
     #print(data)
     if x == 1:
-        predict_data1(data)
+        return predict_data1(data)
     else:
-        predict_data2(data)
+        return predict_data2(data)
 
     #document(key)
 
 
 
 if __name__ == "__main__":
-    raw_event_source(splitter)
-    
+    raw_event_source(lambda r: print(splitter(r)))

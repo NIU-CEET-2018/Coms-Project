@@ -27,7 +27,7 @@ def reshape(y):
 
 #definition
 data_list1 = []
-DATA_DIR1 = './Train_Data2/'
+DATA_DIR1 = './Train_Data/'
 listing1 = os.listdir(DATA_DIR1)
 num_samples1 = len(listing1)
 

@@ -18,7 +18,7 @@ def reshape(y):
     z = np.delete(y,-1,1)
     numrows = len(z)
     if numrows <=50:
-        shape=(50,41)
+        shape=(50,40)
         result = np.zeros(shape)
         result[:z.shape[0],:z.shape[1]] = z
     else:
@@ -49,7 +49,7 @@ for filename in os.listdir(DATA_DIR2):
     x = np.genfromtxt(DATA_DIR2 + filename, delimiter=',')
     normalized = reshape(x)
     normalized = norm(normalized)
-    reshaped = normalized.reshape(1, 50, 41)
+    reshaped = normalized.reshape(1, 50, 40)
     data_list2.append(reshaped)
     m = re.search(r'[a-zA-Z]',filename)
     p = letter_encode.index(m.group(0))
@@ -77,22 +77,15 @@ print("Loaded model from disk")
 loaded_model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 score = loaded_model.evaluate(X_test, Y_test, verbose=0)
 print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
-def print_nines(x):
-    if x==1:
-        print("all the nines!")
-        return
-    from math import log
-    print("that's",round(-log(1-x,10),1),"nines")
-print_nines(score[1])
 
 #feeds single file to model for testing
 #NOTE: change the file directory in genfromtxt to test any file in the test folder
 for filename in os.listdir(DATA_DIR2):
-    #print(filename)
+    print(filename)
     z_predict = np.genfromtxt(DATA_DIR2 + filename, delimiter= ',')
     z_predict = reshape(z_predict)
     z_predict = norm(z_predict)
-    z_final = np.reshape(z_predict, (1,50,41))
+    z_final = np.reshape(z_predict, (1,50,40))
     y_predict = loaded_model.predict(z_final, verbose=0)
 
     #convert output from float to rounded integers
@@ -109,8 +102,4 @@ for filename in os.listdir(DATA_DIR2):
     #iterates over dictionary to find corresponding letter
     for key, value in dictionary.items():
         if np.array_equal(predict, value):
-            #print(key)
-            m = re.search(r'[a-zA-Z]',filename)
-            l = m.group(0)
-            if key != l:
-                print("Guessed '"+str(key)+"' but was '"+str(l)+"'")
+            print(key)
