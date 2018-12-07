@@ -115,19 +115,20 @@ def output(prediction, dictionary):
                if times[k]>10)
 
 def output1(prediction, dictionary):
-    global times
+    global times1
     global old
     #iterates over dictionary to find corresponding letter
     for key, value in dictionary.items():
         if np.array_equal(prediction, value):
-            times[key]+=1
+            times1[key]+=1
         else:
-            times[key]=0
+            times1[key]=0
     return list(k
-               for k in times
-               if times[k]>10)
+               for k in times1
+               if times1[k]>10)
 
 times = defaultdict(lambda: 0)
+times1 = defaultdict(lambda: 0)
 predict1=np.zeros((50,41))
 predict2=np.zeros((50,41))
 old=None
@@ -151,8 +152,30 @@ def splitter(data):
         return predict_data2(data)
 
     #document(key)
-
-
-
+global acold
+acold = None
+import AutoComplete as ac
 if __name__ == "__main__":
-    raw_event_source(lambda r: print(splitter(r)))
+    def prnt(x):
+        global acold
+        #print("in prnt")
+        if type(x)!=type([]):
+            #print("was a nope")
+            return
+        if len(x)==0:
+            #print("was empty")
+            return
+        if len(x[0])>1:
+            #print("didn't want")
+            return
+        if acold != x:
+            print("was new")
+            print("got",x)
+            acold = x
+            ac.give(x)
+            print("let's have a look")
+            print(ac.known())
+            print("predicting")
+            print(ac.predict())
+
+    raw_event_source(lambda r: prnt(splitter(r)))

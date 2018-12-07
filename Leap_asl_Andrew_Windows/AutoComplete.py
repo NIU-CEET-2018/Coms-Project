@@ -56,14 +56,16 @@ def known():
             curr.pop(0)
             curr_done.append([' '])
         ln=len(curr)
-        print("smart part",ln,curr)
+        if DEBUG:
+            print("smart part",ln,curr)
         for l in range(ln):
             p=list(p
                    for mode in modes(curr[:l])
                    for p in ac.predict_currword(mode))
             #print(p)
             if len(p)==1:
-                print("found",p[0][0])
+                if DEBUG:
+                    print("found",p[0][0])
                 curr_done.append(p[0][0])
                 curr=curr[l:]
                 break
@@ -71,10 +73,12 @@ def known():
                 p=list(p[0]
                    for mode in modes(curr[:l-1])
                    for p in ac.predict_currword(mode))
-                print(p)
+                if DEBUG:
+                    print(p)
                 if curr[:l-1] in p:
                     p=[curr[:l-1]]
-                print("guessed",p[0])
+                if DEBUG:
+                    print("guessed",p[0])
                 curr=curr[l-1:]
                 curr_done.append(p[0])
                 break
