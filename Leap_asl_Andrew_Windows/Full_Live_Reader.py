@@ -46,14 +46,18 @@ def predict_data1(data):
     if sum(*predict)*m < .8: # check that the total chance of a letter is at least 80%
         return 'nope' # if not leave
 
-    predict = np.reshape(predict, (26,))
+    predict = np.reshape(predict, (27,))
     #print(predict)
     #dictionary to translate back to letter
     dictionary = {}
-    x = 0
-    for c in ascii_lowercase:
-        dictionary[c] = np.array([0]*x +[1] + [0]*(25-x))
-        x+=1
+    
+    for c in range(0,18):
+        dictionary[ascii_lowercase[c]] = np.array([0]*c +[1] + [0]*(26-c))
+    
+    dictionary['rest'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0])
+
+    for c in range(19,27):
+        dictionary[ascii_lowercase[c-1]] = np.array([0]*c +[1] + [0]*(26-c))
 
     return output(predict, dictionary)
 
@@ -76,20 +80,21 @@ def predict_data2(data):
     if sum(*predict)*m < .8: # check that the total chance of a letter is at least 80%
         return 'nope' # if not leave
 
-    predict = np.reshape(predict, (14,))
+    predict = np.reshape(predict, (15,))
 
     #translates
     dictionary = {}
-    for c in range(1,5):
-        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(13-(c-1)))
-    for c in range(6,10):
-        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(13-(c-1)))
+    for c in range(2,6):
+        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(15-(c-1)))
+    for c in range(7,11):
+        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(15-(c-1)))
     
-    dictionary['close'] = np.array([0,0,0,0,0,0,0,0,0,1,0,0,0,0])
-    dictionary['down'] = np.array([0,0,0,0,0,0,0,0,0,0,1,0,0,0])
-    dictionary['left'] = np.array([0,0,0,0,0,0,0,0,0,0,0,1,0,0])
-    dictionary['right'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,0])
-    dictionary['up'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,1])
+    dictionary['5'] = np.array([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+    dictionary['close'] = np.array([0,0,0,0,0,0,0,0,0,0,1,0,0,0,0])
+    dictionary['down'] = np.array([0,0,0,0,0,0,0,0,0,0,0,1,0,0,0])
+    dictionary['left'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,0,0])
+    dictionary['right'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,1,0])
+    dictionary['up'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
     
     if np.all(predict == np.array([0,0,0,0,1,0,0,0,0,0,0,0,0,0])):
         return "nope"

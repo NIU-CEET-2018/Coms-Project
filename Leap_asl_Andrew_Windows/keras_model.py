@@ -33,13 +33,13 @@ num_samples1 = len(listing1)
 
 letter_encode=[]
 for filename in os.listdir(DATA_DIR1):
-    m = re.search(r'[a-zA-Z]',filename)
+    m = re.search(r'[a-zA-Z]*',filename)
     letter_encode.append(m.group(0))
 letter_encode=list(set(letter_encode))
 letter_encode.sort()
 
 #creates 3D array
-label1 = np.ones((num_samples1, 26), dtype=int)
+label1 = np.ones((num_samples1, 27), dtype=int)
 for filename in os.listdir(DATA_DIR1):
     #print(filename)
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
@@ -47,7 +47,7 @@ for filename in os.listdir(DATA_DIR1):
     normalized = norm(normalized)
     reshaped = normalized.reshape(1, 50, 41)
     data_list1.append(reshaped)
-    m = re.search(r'[a-zA-Z]',filename)
+    m = re.search(r'[a-zA-Z]*',filename)
     p = letter_encode.index(m.group(0))
     #print(p,m.group(0))
     label1[len(data_list1)-1] = [0]*p+[1]+[0]*(len(letter_encode)-p-1)
@@ -67,7 +67,7 @@ np.random.seed(7)
 model = Sequential()
 model.add(Dense(200, input_shape=(50, 41), activation='tanh'))
 model.add(LSTM(200, dropout=0.2, recurrent_dropout=0.2))
-model.add(Dense(26, activation='softmax'))
+model.add(Dense(27, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 #checkpoint
 filepath='weights.best.hdf5'

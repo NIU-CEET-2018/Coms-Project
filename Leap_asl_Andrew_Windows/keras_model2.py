@@ -82,7 +82,7 @@ letter_encode.sort()
 
 
 #creates 3D array
-label1 = np.ones((num_samples1, 14), dtype=int)
+label1 = np.ones((num_samples1, 15), dtype=int)
 for filename in os.listdir(DATA_DIR1):
     #print(filename)
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
@@ -93,7 +93,7 @@ for filename in os.listdir(DATA_DIR1):
     m = filename[0]
     p = letter_encode.index(m)
     #print(p,m)
-    label1[len(data_list1)-1] = [0]*p+[1]+[0]*(14-p-1)
+    label1[len(data_list1)-1] = [0]*p+[1]+[0]*(15-p-1)
     #print (filename, label2[len(data_list2)-1])
 data_array1 = np.vstack(data_list1)
 
@@ -109,7 +109,7 @@ np.random.seed(7)
 model = Sequential()
 model.add(Dense(200, input_shape=(50, 41), activation='tanh'))
 model.add(LSTM(200, dropout=0.2, recurrent_dropout=0.2))
-model.add(Dense(14, activation='softmax'))
+model.add(Dense(15, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 #checkpoint
 filepath='right_hand.hdf5'
