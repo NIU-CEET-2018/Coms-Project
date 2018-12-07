@@ -7,12 +7,14 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import keys
 
-class Stream(QtCore.QObject):
-    newText = QtCore.pyqtSignal(str)
 
-    def write(self,text):
-        self.newText.emit(str(text))
+#class Stream(QtCore.QObject):
+   # newText = QtCore.pyqtSignal(str)
+
+    #def write(self,text):
+        #self.newText.emit(str(text))
         
 class Ui_FingerKeys(object):
     def setupUi(self, FingerKeys):
@@ -67,17 +69,17 @@ class Ui_FingerKeys(object):
         self.retranslateUi(FingerKeys)
         QtCore.QMetaObject.connectSlotsByName(FingerKeys)
 
-        sys.stdout = Stream(newText=self.onUpdateText)
+        #sys.stdout = Stream(newText=self.onUpdateText)
 
-    def onUpdateText(self,text):
-        cursor = self.process.textCursor()
-        cursor.movePosition(QtGui.QTextCursor.End)
-        cursor.insertText(text)
-        self.process.setTextCursor(cursor)
-        self.process.ensureCursorVisible()
+   # def onUpdateText(self,text):
+        #cursor = self.process.textCursor()
+        #cursor.movePosition(QtGui.QTextCursor.End)
+        #cursor.insertText(text)
+        #self.process.setTextCursor(cursor)
+        #self.process.ensureCursorVisible()
 
-    def __del__(self):
-        sys.stdout = sys.__stdout__
+    #def __del__(self):
+        #sys.stdout = sys.__stdout__
 
     def retranslateUi(self, FingerKeys):
         _translate = QtCore.QCoreApplication.translate
@@ -99,5 +101,6 @@ if __name__ == "__main__":
     ui = Ui_FingerKeys()
     ui.setupUi(FingerKeys)
     FingerKeys.show()
+    raw_event_source(lambda row: handel_gesture(splitter(row)))
     sys.exit(app.exec_())
 
