@@ -5,17 +5,19 @@ from Full_Live_Reader import splitter
 keyboard=Controller()
 
 def pressKey(key):
-    keyboard.press(str(key))
-    keyboard.release(str(key))
+    keyboard.press(key)
+    keyboard.release(key)
 
 def handel_gesture(g):
-    if len(g)==1:
+    if g == None:
+        pass
+    elif len(g)==1:
         pressKey(g)
     else:
         if g == "right":
             pressKey(" ")
         elif g == "left":
-            pass
+            pressKey(Key.backspace)
         elif g == "down":
             pressKey(".")
         elif g == "nope":

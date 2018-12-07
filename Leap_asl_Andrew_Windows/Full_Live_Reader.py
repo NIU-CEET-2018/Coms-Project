@@ -53,13 +53,13 @@ def predict_data1(data):
     
     for c in range(0,18):
         dictionary[ascii_lowercase[c]] = np.array([0]*c +[1] + [0]*(26-c))
-    
-    dictionary['rest'] = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0])
 
     for c in range(19,27):
         dictionary[ascii_lowercase[c-1]] = np.array([0]*c +[1] + [0]*(26-c))
-
-    return output(predict, dictionary)
+    if np.all(predict == np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0])):
+        return "nope"
+    else:
+        return output(predict, dictionary)
 
 #def document(key):
     #with open("Document.txt", "w") as text_file:
@@ -84,10 +84,10 @@ def predict_data2(data):
 
     #translates
     dictionary = {}
-    for c in range(2,6):
-        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(15-(c-1)))
-    for c in range(7,11):
-        dictionary[str(c)] = np.array([0]*(c-1) +[1] + [0]*(15-(c-1)))
+    for c in range(1,5):
+        dictionary[str(c)] = np.array([0]*(c) +[1] + [0]*(14-(c)))
+    for c in range(6,10):
+        dictionary[str(c)] = np.array([0]*(c) +[1] + [0]*(14-(c)))
     
     dictionary['5'] = np.array([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
     dictionary['close'] = np.array([0,0,0,0,0,0,0,0,0,0,1,0,0,0,0])
@@ -107,12 +107,12 @@ def output(prediction, dictionary):
     #iterates over dictionary to find corresponding letter
     for key, value in dictionary.items():
         if np.array_equal(prediction, value):
-            times[key]+=1
-        else:
-            times[key]=0
-    return list(k
-               for k in times
-               if times[k]>10)
+            times+=1
+            if key!=old:
+                times=0
+                old=key
+            if times==20:
+                return key
 
 def output1(prediction, dictionary):
     global times
@@ -120,14 +120,14 @@ def output1(prediction, dictionary):
     #iterates over dictionary to find corresponding letter
     for key, value in dictionary.items():
         if np.array_equal(prediction, value):
-            times[key]+=1
-        else:
-            times[key]=0
-    return list(k
-               for k in times
-               if times[k]>10)
+            times+=1
+            if key!=old:
+                times=0
+                old=key
+            if times==20:
+                return key
 
-times = defaultdict(lambda: 0)
+times = 0#defaultdict(lambda: 0)
 predict1=np.zeros((50,41))
 predict2=np.zeros((50,41))
 old=None
@@ -155,4 +155,12 @@ def splitter(data):
 
 
 if __name__ == "__main__":
-    raw_event_source(lambda r: print(splitter(r)))
+    def prnt(x):
+        if x != None and x != 'nope':
+            print(x)
+    raw_event_source(lambda x:prnt(splitter(x)))
+    
+
+
+
+
