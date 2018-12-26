@@ -49,7 +49,7 @@ letter_encode=list(set(letter_encode))
 letter_encode.sort()
 
 #creates 3D array
-label1 = np.ones((num_samples1, 14), dtype=int)
+label1 = np.ones((num_samples1, 15), dtype=int)
 for filename in os.listdir(DATA_DIR1):
     #print(filename)
     x = np.genfromtxt(DATA_DIR1 + filename, delimiter=',')
@@ -60,9 +60,14 @@ for filename in os.listdir(DATA_DIR1):
     m = filename[0]
     p = letter_encode.index(m)
     #print(p,m)
-    label1[len(data_list1)-1] = [0]*p+[1]+[0]*(14-p-1)
+    #label1[len(data_list1)-1] = [0]*p+[1]+[0]*(15-p-1)
     #print (label1[len(data_list1)-1])
 data_array1 = np.vstack(data_list1)
+
+label1[0:30] = [0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]
+label1[30:57] = [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]
+label1[57:89] = [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0]
+label1[89:142] = [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0]
 
 #exit(0)
 
@@ -83,4 +88,4 @@ callbacks_list = [checkpoint]
 print(model.summary())
 
 #iterates model over data set
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=100, batch_size=32, callbacks=callbacks_list, verbose=0)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32, callbacks=callbacks_list, verbose=0)

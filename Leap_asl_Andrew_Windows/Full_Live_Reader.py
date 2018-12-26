@@ -124,7 +124,7 @@ def output1(prediction, dictionary):
             if key!=old:
                 times=0
                 old=key
-            if times==20:
+            if times==25:
                 return key
 
 times = 0#defaultdict(lambda: 0)
